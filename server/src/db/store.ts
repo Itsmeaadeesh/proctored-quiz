@@ -198,6 +198,23 @@ class DataStore {
 
   // --- QUESTION OPERATIONS ---
   async getQuestions(quizId: string, sanitize = true): Promise<(Question | SanitizedQuestion)[]> {
+    if (this.isSupabaseEnabled && this.supabase) {
+      try {
+        const { data, error } = await this.supabase
+          .from('questions')
+          .select('*')
+          .eq('quiz_id', quizId)
+          .order('order_index', { ascending: true });
+        if (!error && data && data.length > 0) {
+          const list = data as Question[];
+          list.forEach((q) => this.questions.set(q.id, q));
+          if (!sanitize) return list;
+          return list.map(({ correct_answer, ...rest }) => rest);
+        }
+      } catch (e) {
+        console.warn('Supabase getQuestions error:', e);
+      }
+    }
     const list = Array.from(this.questions.values()).filter((q) => q.quiz_id === quizId);
     if (!sanitize) {
       return list;
@@ -231,9 +248,24 @@ class DataStore {
       return existing;
     }
 
-    const quizQuestions = Array.from(this.questions.values()).filter(
-      (q) => q.quiz_id === quizId
-    );
+    if (this.isSupabaseEnabled && this.supabase) {
+      try {
+        const { data, error } = await this.supabase
+          .from('submissions')
+          .select('*')
+          .eq('quiz_id', quizId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (!error && data) {
+          const sub = data as Submission;
+          this.submissions.set(sub.id, sub);
+          return sub;
+        }
+      } catch (e) {}
+    }
+
+    const quizQuestions = await this.getQuestions(quizId, false);
     const totalMarks = quizQuestions.reduce((sum, q) => sum + (q.marks || 1), 0);
 
     const submission: Submission = {
@@ -262,6 +294,10 @@ class DataStore {
           id: submission.id,
           quiz_id: submission.quiz_id,
           user_id: submission.user_id,
+          student_name: submission.student_name,
+          student_roll_no: submission.student_roll_no,
+          student_email: submission.student_email,
+          student_phone: submission.student_phone,
           answers: submission.answers,
           score: submission.score,
           total_marks: submission.total_marks,
@@ -277,7 +313,26 @@ class DataStore {
   }
 
   async getSubmission(submissionId: string): Promise<Submission | null> {
-    return this.submissions.get(submissionId) || null;
+    const cached = this.submissions.get(submissionId);
+    if (cached) return cached;
+
+    if (this.isSupabaseEnabled && this.supabase) {
+      try {
+        const { data, error } = await this.supabase
+          .from('submissions')
+          .select('*')
+          .eq('id', submissionId)
+          .single();
+        if (data && !error) {
+          const sub = data as Submission;
+          this.submissions.set(sub.id, sub);
+          return sub;
+        }
+      } catch (err) {
+        console.warn('Supabase getSubmission error:', err);
+      }
+    }
+    return null;
   }
 
   async submitAnswers(
@@ -285,7 +340,7 @@ class DataStore {
     answers: Record<string, string | string[]>,
     timeSpentSeconds: number
   ): Promise<Submission | null> {
-    const submission = this.submissions.get(submissionId);
+    const submission = await this.getSubmission(submissionId);
     if (!submission) return null;
 
     submission.answers = answers;
@@ -370,7 +425,7 @@ class DataStore {
 
     this.violations.push(violation);
 
-    const submission = this.submissions.get(submissionId);
+    const submission = await this.getSubmission(submissionId);
     let isDisqualified = false;
 
     if (submission) {
@@ -388,12 +443,13 @@ class DataStore {
     if (this.isSupabaseEnabled && this.supabase) {
       try {
         await this.supabase.from('violations').insert(violation);
-        if (submission && isDisqualified) {
+        if (submission) {
           await this.supabase
             .from('submissions')
             .update({
-              disqualified: true,
-              status: 'disqualified',
+              violations_count: submission.violations_count,
+              disqualified: submission.disqualified,
+              status: submission.status,
               disqualification_reason: submission.disqualification_reason,
             })
             .eq('id', submission.id);
@@ -407,6 +463,20 @@ class DataStore {
   }
 
   async getViolationsForSubmission(submissionId: string): Promise<Violation[]> {
+    if (this.isSupabaseEnabled && this.supabase) {
+      try {
+        const { data, error } = await this.supabase
+          .from('violations')
+          .select('*')
+          .eq('submission_id', submissionId)
+          .order('timestamp', { ascending: true });
+        if (!error && data) {
+          return data as Violation[];
+        }
+      } catch (err) {
+        console.warn('Supabase getViolations error:', err);
+      }
+    }
     return this.violations.filter((v) => v.submission_id === submissionId);
   }
 
@@ -439,11 +509,42 @@ class DataStore {
   }
 
   async getSnapshotsForSubmission(submissionId: string): Promise<ProctorSnapshot[]> {
+    if (this.isSupabaseEnabled && this.supabase) {
+      try {
+        const { data, error } = await this.supabase
+          .from('proctor_snapshots')
+          .select('*')
+          .eq('submission_id', submissionId)
+          .order('timestamp', { ascending: true });
+        if (!error && data) {
+          return data as ProctorSnapshot[];
+        }
+      } catch (err) {
+        console.warn('Supabase getSnapshots error:', err);
+      }
+    }
     return this.snapshots.filter((s) => s.submission_id === submissionId);
   }
 
   // --- ADMIN STATS & LISTS ---
   async getAllSubmissions(quizId?: string): Promise<Submission[]> {
+    if (this.isSupabaseEnabled && this.supabase) {
+      try {
+        let query = this.supabase
+          .from('submissions')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (quizId) {
+          query = query.eq('quiz_id', quizId);
+        }
+        const { data, error } = await query;
+        if (!error && data) {
+          return data as Submission[];
+        }
+      } catch (err) {
+        console.warn('Supabase getAllSubmissions error:', err);
+      }
+    }
     const list = Array.from(this.submissions.values());
     if (quizId) {
       return list.filter((s) => s.quiz_id === quizId);
@@ -456,7 +557,18 @@ class DataStore {
     const totalSubmissions = subs.length;
     const completed = subs.filter((s) => s.status === 'submitted');
     const disqualified = subs.filter((s) => s.disqualified);
-    const totalViolations = this.violations.length;
+    
+    let totalViolations = this.violations.length;
+    if (this.isSupabaseEnabled && this.supabase) {
+      try {
+        const { count, error } = await this.supabase
+          .from('violations')
+          .select('*', { count: 'exact', head: true });
+        if (!error && count !== null) {
+          totalViolations = count;
+        }
+      } catch (e) {}
+    }
 
     const avgScore =
       completed.length > 0
