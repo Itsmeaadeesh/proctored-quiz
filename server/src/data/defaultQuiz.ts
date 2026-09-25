@@ -8,7 +8,7 @@ export const DEFAULT_QUIZ: Quiz = {
   duration_minutes: quizData.duration_minutes || 60,
   max_violations: 3,
   shuffle_questions: true,
-  allow_backtracking: false,
+  allow_backtracking: true,
   is_active: true,
   created_at: new Date().toISOString(),
 };

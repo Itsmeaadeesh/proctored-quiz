@@ -34,7 +34,7 @@ async function seedDatabase() {
       duration_minutes: quizData.duration_minutes || 60,
       max_violations: 3,
       shuffle_questions: true,
-      allow_backtracking: false, // Default = locked per requirements
+      allow_backtracking: true, // Enabled per user request
       is_active: true,
     };
 

@@ -40,6 +40,23 @@ router.post('/:submissionId/submit', async (req: Request, res: Response) => {
   }
 });
 
+// Save draft answers periodically or upon option click
+router.post('/:submissionId/draft', async (req: Request, res: Response) => {
+  try {
+    const { submissionId } = req.params;
+    const { answers } = req.body;
+
+    if (answers && typeof answers === 'object') {
+      await store.saveDraftAnswers(submissionId, answers);
+    }
+
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error('Error saving draft answers:', err);
+    return res.status(500).json({ error: 'Failed to save draft answers.' });
+  }
+});
+
 // Get individual submission summary
 router.get('/:submissionId', async (req: Request, res: Response) => {
   try {

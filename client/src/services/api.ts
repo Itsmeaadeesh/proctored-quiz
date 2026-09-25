@@ -129,6 +129,19 @@ export const api = {
     return res.json();
   },
 
+  async saveDraftProgress(
+    submissionId: string,
+    answers: Record<string, string | string[]>
+  ): Promise<{ success: boolean }> {
+    const res = await fetch(`${BASE_URL}/submissions/${submissionId}/draft`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answers }),
+    });
+    if (!res.ok) throw new Error('Failed to save draft progress');
+    return res.json();
+  },
+
   async getSubmission(submissionId: string): Promise<{ submission: Submission; violations: Violation[] }> {
     const res = await fetch(`${BASE_URL}/submissions/${submissionId}`);
     if (!res.ok) throw new Error('Could not fetch submission details');

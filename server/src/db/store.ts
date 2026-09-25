@@ -183,18 +183,63 @@ class DataStore {
 
   // --- QUIZ OPERATIONS ---
   async getActiveQuiz(): Promise<Quiz> {
+    if (this.isSupabaseEnabled && this.supabase) {
+      try {
+        const { data, error } = await this.supabase
+          .from('quizzes')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        if (!error && data) {
+          this.quizzes.set(data.id, data as Quiz);
+          return data as Quiz;
+        }
+      } catch (e) {}
+    }
     return Array.from(this.quizzes.values())[0] || DEFAULT_QUIZ;
   }
 
   async getQuiz(quizId: string): Promise<Quiz | null> {
+    if (this.isSupabaseEnabled && this.supabase) {
+      try {
+        const { data, error } = await this.supabase
+          .from('quizzes')
+          .select('*')
+          .eq('id', quizId)
+          .single();
+        if (!error && data) {
+          this.quizzes.set(data.id, data as Quiz);
+          return data as Quiz;
+        }
+      } catch (e) {}
+    }
     return this.quizzes.get(quizId) || null;
   }
 
   async updateQuiz(quizId: string, updates: Partial<Quiz>): Promise<Quiz | null> {
     const quiz = this.quizzes.get(quizId);
-    if (!quiz) return null;
-    Object.assign(quiz, updates);
-    return quiz;
+    if (quiz) {
+      Object.assign(quiz, updates);
+    }
+    if (this.isSupabaseEnabled && this.supabase) {
+      try {
+        const { data, error } = await this.supabase
+          .from('quizzes')
+          .update(updates)
+          .eq('id', quizId)
+          .select()
+          .single();
+        if (!error && data) {
+          this.quizzes.set(data.id, data as Quiz);
+          return data as Quiz;
+        }
+      } catch (e) {
+        console.warn('Supabase updateQuiz error:', e);
+      }
+    }
+    return quiz || null;
   }
 
   // --- QUESTION OPERATIONS ---
@@ -476,6 +521,23 @@ class DataStore {
     }
 
     return submission;
+  }
+
+  async saveDraftAnswers(submissionId: string, answers: Record<string, any>): Promise<void> {
+    const submission = await this.getSubmission(submissionId);
+    if (submission) {
+      submission.answers = answers;
+    }
+    if (this.isSupabaseEnabled && this.supabase) {
+      try {
+        await this.supabase
+          .from('submissions')
+          .update({ answers })
+          .eq('id', submissionId);
+      } catch (err) {
+        console.warn('Supabase saveDraftAnswers error:', err);
+      }
+    }
   }
 
   // --- VIOLATIONS OPERATIONS ---

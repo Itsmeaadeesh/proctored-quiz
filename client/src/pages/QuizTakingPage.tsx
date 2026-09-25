@@ -35,30 +35,58 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
   const [disqualificationReason, setDisqualificationReason] = useState('');
 
   const startTimeRef = useRef(Date.now());
+  const hasStartedRef = useRef(false);
+  const answersRef = useRef<Record<string, string | string[]>>({});
+  const submissionIdRef = useRef<string | null>(submissionId);
+  const isSubmittingRef = useRef(false);
+  const quizRef = useRef<Quiz | null>(null);
 
-  // Handle Timeout Auto-submit
+  // Synchronize state references
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  useEffect(() => {
+    submissionIdRef.current = submissionId;
+  }, [submissionId]);
+
+  useEffect(() => {
+    isSubmittingRef.current = isSubmitting;
+  }, [isSubmitting]);
+
+  useEffect(() => {
+    quizRef.current = quiz;
+  }, [quiz]);
+
+  // Handle Timeout Auto-submit (stable reference - no re-triggers)
   const handleTimeoutAutoSubmit = useCallback(
     async (forcedSubId?: string) => {
-      const targetSubId = forcedSubId || submissionId;
-      if (!targetSubId || isSubmitting) return;
+      const targetSubId = forcedSubId || submissionIdRef.current;
+      if (!targetSubId || isSubmittingRef.current) return;
       setIsSubmitting(true);
+      isSubmittingRef.current = true;
 
-      const maxSec = quiz ? (quiz.duration_minutes || 60) * 60 : 3600;
+      const currentQuiz = quizRef.current;
+      const maxSec = currentQuiz ? (currentQuiz.duration_minutes || 60) * 60 : 3600;
 
       try {
-        await api.submitQuiz(targetSubId, answers, maxSec, 'auto_submitted');
+        await api.submitQuiz(targetSubId, answersRef.current, maxSec, 'auto_submitted');
+        try {
+          localStorage.removeItem(`rha_answers_${targetSubId}`);
+        } catch (e) {}
         onExamCompleted(targetSubId);
       } catch (err) {
         console.error('Timeout auto-submit error:', err);
         onExamCompleted(targetSubId);
       }
     },
-    [submissionId, isSubmitting, quiz, answers, onExamCompleted]
+    [onExamCompleted]
   );
 
-  // Initialize or resume quiz session
+  // Initialize or resume quiz session ONCE on mount
   useEffect(() => {
-    if (!user || !activeQuizId) return;
+    if (!user || !activeQuizId || hasStartedRef.current) return;
+    hasStartedRef.current = true;
 
     let isMounted = true;
 
@@ -67,10 +95,27 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
       .then((data) => {
         if (!isMounted) return;
         setQuiz(data.quiz);
+        quizRef.current = data.quiz;
         setQuestions(data.questions);
         setSubmissionId(data.submission.id);
-        if (data.submission.answers) {
-          setAnswers(data.submission.answers);
+        submissionIdRef.current = data.submission.id;
+
+        // Restore any existing answers from local draft or server
+        let initialAnswers: Record<string, string | string[]> = {};
+        try {
+          const cached = localStorage.getItem(`rha_answers_${data.submission.id}`);
+          if (cached) {
+            initialAnswers = JSON.parse(cached);
+          }
+        } catch (e) {}
+
+        if (data.submission.answers && Object.keys(data.submission.answers).length > 0) {
+          initialAnswers = { ...initialAnswers, ...data.submission.answers };
+        }
+
+        if (Object.keys(initialAnswers).length > 0) {
+          setAnswers(initialAnswers);
+          answersRef.current = initialAnswers;
         }
 
         // Calculate continuous remaining time from session start
@@ -109,17 +154,20 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
     async (reason: string) => {
       setDisqualificationReason(reason);
       setIsDisqualifiedModalOpen(true);
-      // Auto-submit current answers under disqualified status
-      if (submissionId) {
+      const targetSubId = submissionIdRef.current;
+      if (targetSubId) {
         const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
         try {
-          await api.submitQuiz(submissionId, answers, timeSpent, 'disqualified' as any);
+          await api.submitQuiz(targetSubId, answersRef.current, timeSpent, 'disqualified' as any);
+          try {
+            localStorage.removeItem(`rha_answers_${targetSubId}`);
+          } catch (e) {}
         } catch (e) {
           console.error('Auto-submit under disqualification failed:', e);
         }
       }
     },
-    [submissionId, answers]
+    []
   );
 
   // Proctoring Hook
@@ -159,14 +207,30 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
     }
   }, [isLoading, requestFullscreen, showFullscreenModal]);
 
-  // Handle Answer Selection
+  // Handle Answer Selection - saves to state, localStorage, and server draft
   const handleSelectAnswer = (answer: string | string[]) => {
     if (!questions[currentIndex]) return;
     const qId = questions[currentIndex].id;
-    setAnswers((prev) => ({
-      ...prev,
-      [qId]: answer,
-    }));
+    setAnswers((prev) => {
+      const next = {
+        ...prev,
+        [qId]: answer,
+      };
+      answersRef.current = next;
+
+      // Save to localStorage immediately
+      const subId = submissionIdRef.current;
+      if (subId) {
+        try {
+          localStorage.setItem(`rha_answers_${subId}`, JSON.stringify(next));
+        } catch (e) {}
+
+        // Fire-and-forget sync to backend
+        api.saveDraftProgress(subId, next).catch(() => {});
+      }
+
+      return next;
+    });
   };
 
   // Toggle Flag for current question
@@ -184,18 +248,24 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
 
   // Submit Final Answers
   const handleSubmitExam = async () => {
-    if (!submissionId || isSubmitting) return;
+    const targetSubId = submissionIdRef.current;
+    if (!targetSubId || isSubmittingRef.current) return;
     setIsSubmitting(true);
+    isSubmittingRef.current = true;
 
     const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
 
     try {
-      await api.submitQuiz(submissionId, answers, timeSpent);
-      onExamCompleted(submissionId);
+      await api.submitQuiz(targetSubId, answersRef.current, timeSpent);
+      try {
+        localStorage.removeItem(`rha_answers_${targetSubId}`);
+      } catch (e) {}
+      onExamCompleted(targetSubId);
     } catch (err) {
       console.error('Failed to submit exam:', err);
       alert('Network error submitting your exam. Please notify proctor immediately.');
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
