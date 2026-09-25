@@ -4,10 +4,11 @@ import { api } from '../services/api';
 import { Quiz } from '../types/quiz';
 import {
   ShieldAlert,
-  Camera,
   Maximize2,
   Eye,
   AlertTriangle,
+  Lock,
+  ShieldCheck,
   CheckSquare,
   Square,
   ArrowRight,
@@ -20,11 +21,8 @@ interface InstructionsPageProps {
 export const InstructionsPage: React.FC<InstructionsPageProps> = ({ onStartExam }) => {
   const { user, activeQuizId } = useAuth();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [totalQuestions, setTotalQuestions] = useState(10);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [totalQuestions, setTotalQuestions] = useState(60);
   const [hasAgreed, setHasAgreed] = useState(false);
-  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
-  const videoPreviewRef = React.useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     // Fetch active quiz metadata
@@ -35,29 +33,6 @@ export const InstructionsPage: React.FC<InstructionsPageProps> = ({ onStartExam 
         setTotalQuestions(data.questionCount);
       })
       .catch((err) => console.error(err));
-  }, []);
-
-  const testCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      setVideoStream(stream);
-      setHasCameraPermission(true);
-      if (videoPreviewRef.current) {
-        videoPreviewRef.current.srcObject = stream;
-        videoPreviewRef.current.play();
-      }
-    } catch {
-      setHasCameraPermission(false);
-    }
-  };
-
-  useEffect(() => {
-    testCamera();
-    return () => {
-      if (videoStream) {
-        videoStream.getTracks().forEach((t) => t.stop());
-      }
-    };
   }, []);
 
   return (
@@ -73,14 +48,14 @@ export const InstructionsPage: React.FC<InstructionsPageProps> = ({ onStartExam 
             {quiz?.title || 'Red Hat Academy Examination'}
           </h1>
           <p className="text-neutral-300 text-sm mt-2 max-w-2xl leading-relaxed">
-            Welcome, <strong>{user?.name}</strong> (Roll: <code className="text-red-400 font-mono">{user?.roll_no}</code>). Please review the proctoring guidelines and ensure your workstation satisfies exam requirements before launch.
+            Welcome, <strong>{user?.name}</strong> (Roll: <code className="text-red-400 font-mono">{user?.roll_no}</code>). Please review the examination guidelines and ensure your workstation satisfies security requirements before launch.
           </p>
         </div>
 
         <div className="flex md:flex-col gap-3 shrink-0">
           <div className="bg-neutral-900 border border-neutral-700 px-4 py-2 rounded-xs text-center">
             <div className="text-[10px] text-neutral-400 uppercase font-bold">Duration</div>
-            <div className="text-lg font-black text-white font-mono">{quiz?.duration_minutes || 15} Mins</div>
+            <div className="text-lg font-black text-white font-mono">{quiz?.duration_minutes || 60} Mins</div>
           </div>
           <div className="bg-neutral-900 border border-neutral-700 px-4 py-2 rounded-xs text-center">
             <div className="text-[10px] text-neutral-400 uppercase font-bold">Questions</div>
@@ -133,11 +108,11 @@ export const InstructionsPage: React.FC<InstructionsPageProps> = ({ onStartExam 
 
               <div className="p-3 bg-redhat-gray-light border-l-3 border-l-redhat-red rounded-xs">
                 <div className="font-bold text-redhat-black mb-1 flex items-center space-x-1.5">
-                  <Camera className="w-3.5 h-3.5 text-redhat-red" />
-                  <span>Periodic Webcam Snapshots</span>
+                  <Lock className="w-3.5 h-3.5 text-redhat-red" />
+                  <span>Clipboard & Shortcut Lock</span>
                 </div>
                 <p className="text-neutral-600 leading-relaxed">
-                  Periodic camera frames are encrypted and logged with your student record to verify single-candidate presence.
+                  Right-click, copy, paste, DevTools (F12), and inspect shortcuts are completely blocked and logged.
                 </p>
               </div>
             </div>
@@ -164,53 +139,53 @@ export const InstructionsPage: React.FC<InstructionsPageProps> = ({ onStartExam 
               )}
             </div>
             <div className="text-xs text-neutral-800 leading-relaxed">
-              <span className="font-bold">I certify that I am the registered candidate.</span> I agree to keep my camera enabled, maintain fullscreen focus, and abide by the Gyan Ganga Institute of Technology & Sciences Academic Honor Code.
+              <span className="font-bold">I certify that I am the registered candidate.</span> I agree to maintain fullscreen focus, avoid switching tabs, and abide by the Gyan Ganga Institute of Technology & Sciences Academic Honor Code.
             </div>
           </div>
 
         </div>
 
-        {/* Right Column: Workstation & Camera Preflight */}
+        {/* Right Column: Workstation Readiness */}
         <div className="space-y-6">
           
           <div className="bg-white border border-redhat-gray-border p-6 rounded-sm shadow-xs">
-            <h4 className="text-sm font-black text-redhat-black font-display uppercase tracking-wider mb-3">
-              Webcam Verification
+            <h4 className="text-sm font-black text-redhat-black font-display uppercase tracking-wider mb-4 pb-2 border-b border-redhat-gray-border flex items-center space-x-2">
+              <ShieldCheck className="w-4 h-4 text-green-600" />
+              <span>Security Readiness</span>
             </h4>
 
-            <div className="relative w-full h-44 bg-black rounded-xs overflow-hidden flex items-center justify-center mb-3">
-              <video
-                ref={videoPreviewRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover mirror"
-                style={{ transform: 'scaleX(-1)' }}
-              />
-              {!hasCameraPermission && (
-                <div className="absolute inset-0 bg-neutral-900/90 flex flex-col items-center justify-center p-4 text-center">
-                  <Camera className="w-8 h-8 text-redhat-red mb-2" />
-                  <p className="text-xs text-white font-bold mb-2">Camera permission required</p>
-                  <button
-                    type="button"
-                    onClick={testCamera}
-                    className="px-3 py-1.5 bg-redhat-red text-white rounded-xs text-xs font-bold"
-                  >
-                    Grant Permission
-                  </button>
-                </div>
-              )}
+            <div className="space-y-3.5 mb-6 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-600">Candidate Session</span>
+                <span className="font-mono font-bold text-green-600 flex items-center space-x-1.5">
+                  <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                  <span>Authenticated</span>
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-600">Proctoring Sandbox</span>
+                <span className="font-mono font-bold text-green-600 flex items-center space-x-1.5">
+                  <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                  <span>Ready</span>
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-600">Watermark Security</span>
+                <span className="font-mono font-bold text-green-600 flex items-center space-x-1.5">
+                  <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                  <span>Active</span>
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-600">Exam Window</span>
+                <span className="font-mono font-bold text-redhat-black">
+                  {quiz?.duration_minutes || 60} Minutes
+                </span>
+              </div>
             </div>
 
-            <div className="flex items-center space-x-2 text-xs">
-              <span
-                className={`w-2.5 h-2.5 rounded-full ${
-                  hasCameraPermission ? 'bg-green-500' : 'bg-redhat-red'
-                }`}
-              />
-              <span className="font-semibold text-neutral-700">
-                {hasCameraPermission ? 'Camera ready for proctoring' : 'Awaiting camera permission'}
-              </span>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xs text-[11px] text-red-900 leading-relaxed mb-4">
+              <strong>Notice:</strong> Once you click below, the browser enters fullscreen and your 60-minute countdown starts immediately.
             </div>
           </div>
 

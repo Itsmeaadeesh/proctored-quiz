@@ -3,14 +3,12 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { Question, Quiz, Submission } from '../types/quiz';
 import { useProctoring } from '../hooks/useProctoring';
-import { useWebcamProctor } from '../hooks/useWebcamProctor';
 import { QuizTimer } from '../components/QuizTimer';
 import { QuestionCard } from '../components/QuestionCard';
 import { QuestionNavigator } from '../components/QuestionNavigator';
 import { WatermarkOverlay } from '../components/WatermarkOverlay';
 import { FullscreenModal } from '../components/FullscreenModal';
 import { BlackoutOverlay } from '../components/BlackoutOverlay';
-import { WebcamProctor } from '../components/WebcamProctor';
 import { AlertCircle, ShieldAlert, CheckCircle2, Lock } from 'lucide-react';
 
 interface QuizTakingPageProps {
@@ -184,20 +182,6 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
     maxViolations: quiz?.max_violations || 3,
     isActive: !isLoading && !isDisqualifiedModalOpen,
     onDisqualify: handleDisqualify,
-  });
-
-  // Webcam Proctoring Hook
-  const {
-    videoRef,
-    canvasRef,
-    isCameraActive,
-    snapshotCount,
-    faceStatus,
-  } = useWebcamProctor({
-    submissionId,
-    userId: user?.id || null,
-    isActive: !isLoading && !isDisqualifiedModalOpen,
-    intervalSeconds: 25,
   });
 
   // Force fullscreen on first render once loaded
@@ -466,19 +450,7 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
         </div>
       </div>
 
-      {/* 8. Live Webcam Proctor PIP in bottom right corner */}
-      {user && (
-        <WebcamProctor
-          videoRef={videoRef}
-          canvasRef={canvasRef}
-          isCameraActive={isCameraActive}
-          snapshotCount={snapshotCount}
-          faceStatus={faceStatus}
-          studentRollNo={user.roll_no}
-        />
-      )}
-
-      {/* 9. Final Submission Confirmation Modal */}
+      {/* 8. Final Submission Confirmation Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white border-2 border-redhat-red rounded-sm max-w-md w-full p-6 shadow-2xl">
