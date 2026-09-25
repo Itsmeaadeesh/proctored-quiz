@@ -13,11 +13,11 @@ const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const api = {
   // Auth
-  async loginStudent(rollNo: string, name: string, email?: string): Promise<{ user: User; quizId: string; quizTitle: string }> {
+  async loginStudent(rollNo: string, name: string, email: string, phone: string): Promise<{ user: User; quizId: string; quizTitle: string }> {
     const res = await fetch(`${BASE_URL}/auth/student-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rollNo, name, email }),
+      body: JSON.stringify({ rollNo, name, email, phone }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({ error: 'Login failed' }));
@@ -46,7 +46,14 @@ export const api = {
     return res.json();
   },
 
-  async startQuiz(quizId: string, userId: string, userName?: string, userRollNo?: string): Promise<{
+  async startQuiz(
+    quizId: string,
+    userId: string,
+    userName?: string,
+    userRollNo?: string,
+    userEmail?: string,
+    userPhone?: string
+  ): Promise<{
     submission: Submission;
     quiz: Quiz;
     questions: Question[];
@@ -54,7 +61,7 @@ export const api = {
     const res = await fetch(`${BASE_URL}/quiz/${quizId}/start`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, userName, userRollNo }),
+      body: JSON.stringify({ userId, userName, userRollNo, userEmail, userPhone }),
     });
     if (!res.ok) throw new Error('Could not start quiz session');
     return res.json();

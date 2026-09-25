@@ -5,6 +5,7 @@ export interface User {
   name: string;
   roll_no: string;
   email?: string;
+  phone?: string;
   role: UserRole;
   created_at: string;
 }
@@ -54,6 +55,8 @@ export interface Submission {
   user_id: string;
   student_name: string;
   student_roll_no: string;
+  student_email?: string;
+  student_phone?: string;
   answers: Record<string, string | string[]>;
   score: number;
   total_marks: number;

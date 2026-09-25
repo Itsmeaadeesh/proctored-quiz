@@ -57,7 +57,8 @@ router.get('/export-csv', async (_req: Request, res: Response) => {
     const submissions = await store.getAllSubmissions();
 
     // Generate CSV Header
-    let csv = 'Roll Number,Student Name,Score,Total Marks,Percentage,Violations Count,Status,Time Spent (Seconds),Disqualified,Submitted At\n';
+    let csv =
+      'Roll Number,Student Name,College Email,Phone Number,Score,Total Marks,Percentage,Violations Count,Status,Time Spent (Seconds),Disqualified,Submitted At\n';
 
     submissions.forEach((s) => {
       const percentage =
@@ -65,6 +66,8 @@ router.get('/export-csv', async (_req: Request, res: Response) => {
       const row = [
         `"${s.student_roll_no || ''}"`,
         `"${s.student_name || ''}"`,
+        `"${s.student_email || ''}"`,
+        `"${s.student_phone || ''}"`,
         s.score,
         s.total_marks,
         percentage,

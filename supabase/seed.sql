@@ -4,10 +4,10 @@
 -- =========================================================================
 
 -- 1. Insert Default Administrator & Sample Student
-INSERT INTO public.users (id, email, roll_no, name, role)
+INSERT INTO public.users (id, email, phone, roll_no, name, role)
 VALUES 
-    ('00000000-0000-0000-0000-000000000001', 'admin@ggits.ac.in', 'ADMIN-RHA', 'GGITS Red Hat Coordinator', 'admin'),
-    ('00000000-0000-0000-0000-000000000002', 'student@ggits.ac.in', '0208CS221001', 'Aman Verma', 'student')
+    ('00000000-0000-0000-0000-000000000001', 'admin@ggits.ac.in', '0000000000', 'ADMIN-RHA', 'GGITS Red Hat Coordinator', 'admin'),
+    ('00000000-0000-0000-0000-000000000002', 'student@ggits.ac.in', '9876543210', '0208CS221001', 'Candidate Student', 'student')
 ON CONFLICT (roll_no) DO NOTHING;
 
 -- 2. Insert Default RHA DAY 26 Quiz

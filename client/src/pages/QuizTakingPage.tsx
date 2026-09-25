@@ -40,7 +40,7 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
     let isMounted = true;
 
     api
-      .startQuiz(activeQuizId, user.id, user.name, user.roll_no)
+      .startQuiz(activeQuizId, user.id, user.name, user.roll_no, user.email, user.phone)
       .then((data) => {
         if (!isMounted) return;
         setQuiz(data.quiz);

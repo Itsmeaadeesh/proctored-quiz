@@ -11,6 +11,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT UNIQUE,
+    phone TEXT,
     roll_no TEXT UNIQUE,
     name TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'admin')),
@@ -56,6 +57,10 @@ CREATE TABLE IF NOT EXISTS public.submissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     quiz_id UUID NOT NULL REFERENCES public.quizzes(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    student_name TEXT,
+    student_roll_no TEXT,
+    student_email TEXT,
+    student_phone TEXT,
     answers JSONB NOT NULL DEFAULT '{}'::jsonb, -- Map: { [question_id]: selectedOption | answerText }
     score NUMERIC NOT NULL DEFAULT 0,
     total_marks NUMERIC NOT NULL DEFAULT 0,

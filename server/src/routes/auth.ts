@@ -6,13 +6,20 @@ const router = Router();
 // Student Login / Verification
 router.post('/student-login', async (req: Request, res: Response) => {
   try {
-    const { rollNo, name, email } = req.body;
+    const { rollNo, name, email, phone } = req.body;
 
-    if (!rollNo || !name) {
-      return res.status(400).json({ error: 'Roll number and student name are required.' });
+    if (!rollNo || !name || !email || !phone) {
+      return res.status(400).json({
+        error: 'Roll number, candidate full name, email address, and phone number are all compulsory.',
+      });
     }
 
-    const user = await store.getOrCreateStudent(rollNo, name, email);
+    const cleanPhone = String(phone).replace(/[^0-9]/g, '');
+    if (cleanPhone.length < 10) {
+      return res.status(400).json({ error: 'Please enter a valid 10-digit mobile number.' });
+    }
+
+    const user = await store.getOrCreateStudent(rollNo, name, email, cleanPhone);
     const activeQuiz = await store.getActiveQuiz();
 
     return res.json({

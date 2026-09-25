@@ -53,6 +53,8 @@ router.post('/:quizId/start', async (req: Request, res: Response) => {
       id: userId,
       name: req.body.userName || 'Student',
       roll_no: req.body.userRollNo || 'ROLL-TEMP',
+      email: req.body.userEmail || '',
+      phone: req.body.userPhone || '',
       role: 'student' as const,
       created_at: new Date().toISOString(),
     };

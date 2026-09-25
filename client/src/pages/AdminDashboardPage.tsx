@@ -276,7 +276,12 @@ export const AdminDashboardPage: React.FC = () => {
                       {sub.student_roll_no}
                     </td>
                     <td className="py-3 px-4 font-bold text-redhat-black">
-                      {sub.student_name}
+                      <div>{sub.student_name}</div>
+                      {(sub.student_email || sub.student_phone) && (
+                        <div className="text-[11px] font-normal text-neutral-500 font-mono mt-0.5">
+                          {sub.student_email} {sub.student_phone ? `• ${sub.student_phone}` : ''}
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-center font-mono font-bold">
                       {sub.score} / {sub.total_marks}
@@ -342,6 +347,8 @@ export const AdminDashboardPage: React.FC = () => {
                 </h3>
                 <p className="text-xs text-neutral-400 font-mono">
                   Roll No: {auditDetails?.submission.student_roll_no} &bull; Score: {auditDetails?.submission.score}/{auditDetails?.submission.total_marks}
+                  {auditDetails?.submission.student_email && ` • Email: ${auditDetails?.submission.student_email}`}
+                  {auditDetails?.submission.student_phone && ` • Phone: ${auditDetails?.submission.student_phone}`}
                 </p>
               </div>
               <button

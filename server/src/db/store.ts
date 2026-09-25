@@ -54,6 +54,7 @@ class DataStore {
       name: 'GGITS Red Hat Coordinator',
       roll_no: 'ADMIN-RHA',
       email: 'admin@ggits.ac.in',
+      phone: '0000000000',
       role: 'admin',
       created_at: new Date().toISOString(),
     };
@@ -70,12 +71,23 @@ class DataStore {
   }
 
   // --- USER OPERATIONS ---
-  async getOrCreateStudent(rollNo: string, name: string, email?: string): Promise<User> {
+  async getOrCreateStudent(
+    rollNo: string,
+    name: string,
+    email?: string,
+    phone?: string
+  ): Promise<User> {
     const key = rollNo.trim().toUpperCase();
     const existing = this.users.get(key);
     if (existing) {
       if (name && existing.name !== name) {
         existing.name = name;
+      }
+      if (email && existing.email !== email) {
+        existing.email = email;
+      }
+      if (phone && existing.phone !== phone) {
+        existing.phone = phone;
       }
       return existing;
     }
@@ -94,6 +106,7 @@ class DataStore {
             name: data.name,
             roll_no: data.roll_no,
             email: data.email,
+            phone: data.phone,
             role: data.role,
             created_at: data.created_at,
           };
@@ -107,6 +120,7 @@ class DataStore {
           roll_no: key,
           name: name.trim(),
           email: email?.trim(),
+          phone: phone?.trim(),
           role: 'student',
           created_at: new Date().toISOString(),
         };
@@ -116,6 +130,7 @@ class DataStore {
           roll_no: newUser.roll_no,
           name: newUser.name,
           email: newUser.email,
+          phone: newUser.phone,
           role: newUser.role,
         });
 
@@ -132,6 +147,7 @@ class DataStore {
       roll_no: key,
       name: name.trim(),
       email: email?.trim(),
+      phone: phone?.trim(),
       role: 'student',
       created_at: new Date().toISOString(),
     };
@@ -148,6 +164,7 @@ class DataStore {
       name: 'GGITS Red Hat Coordinator',
       roll_no: 'ADMIN-RHA',
       email: 'admin@ggits.ac.in',
+      phone: '0000000000',
       role: 'admin',
       created_at: new Date().toISOString(),
     };
@@ -225,6 +242,8 @@ class DataStore {
       user_id: user.id,
       student_name: user.name,
       student_roll_no: user.roll_no,
+      student_email: user.email,
+      student_phone: user.phone,
       answers: {},
       score: 0,
       total_marks: totalMarks,

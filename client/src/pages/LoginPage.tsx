@@ -16,6 +16,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
   const [rollNo, setRollNo] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
 
   // Admin Form State
   const [passcode, setPasscode] = useState('');
@@ -25,8 +26,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
 
   const handleStudentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rollNo.trim() || !name.trim()) {
-      setErrorMsg('Please enter your full name and college roll number.');
+    if (!rollNo.trim() || !name.trim() || !email.trim() || !phone.trim()) {
+      setErrorMsg('All fields are compulsory: Roll Number, Full Name, Email, and Phone Number.');
+      return;
+    }
+
+    if (!email.includes('@') || !email.includes('.')) {
+      setErrorMsg('Please enter a valid college email address.');
+      return;
+    }
+
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    if (cleanPhone.length < 10) {
+      setErrorMsg('Please enter a valid 10-digit mobile number.');
       return;
     }
 
@@ -34,7 +46,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
     setErrorMsg(null);
 
     try {
-      const data = await api.loginStudent(rollNo.trim(), name.trim(), email.trim() || undefined);
+      const data = await api.loginStudent(rollNo.trim(), name.trim(), email.trim(), cleanPhone);
       loginStudent(data.user, data.quizId);
       onSuccess('instructions');
     } catch (err: any) {
@@ -65,11 +77,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
     }
   };
 
-  const handleFillDemoStudent = () => {
-    setName('Aman Verma');
-    setRollNo('0208CS221001');
-    setEmail('aman.verma@ggits.ac.in');
-  };
 
   return (
     <div className="flex-1 flex items-center justify-center p-4 sm:p-6 bg-redhat-gray-light">
@@ -149,7 +156,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                 required
                 value={rollNo}
                 onChange={(e) => setRollNo(e.target.value)}
-                placeholder="e.g. 0208CS221001"
+                placeholder="Enter college roll number"
                 className="w-full px-3.5 py-2.5 border border-redhat-gray-border rounded-sm text-sm text-redhat-black focus:outline-hidden focus:border-l-4 focus:border-l-redhat-red focus:border-redhat-gray-dark transition-all bg-white font-mono uppercase"
               />
             </div>
@@ -163,21 +170,37 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Aman Verma"
+                placeholder="Enter candidate full name"
                 className="w-full px-3.5 py-2.5 border border-redhat-gray-border rounded-sm text-sm text-redhat-black focus:outline-hidden focus:border-l-4 focus:border-l-redhat-red focus:border-redhat-gray-dark transition-all bg-white"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold uppercase text-redhat-black tracking-wider mb-1">
-                College Email (Optional)
+                College Email Address <span className="text-redhat-red">*</span>
               </label>
               <input
                 type="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. student@ggits.ac.in"
+                placeholder="Enter college email address"
                 className="w-full px-3.5 py-2.5 border border-redhat-gray-border rounded-sm text-sm text-redhat-black focus:outline-hidden focus:border-l-4 focus:border-l-redhat-red focus:border-redhat-gray-dark transition-all bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase text-redhat-black tracking-wider mb-1">
+                Phone / WhatsApp Number <span className="text-redhat-red">*</span>
+              </label>
+              <input
+                type="tel"
+                required
+                maxLength={10}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Enter 10-digit mobile number"
+                className="w-full px-3.5 py-2.5 border border-redhat-gray-border rounded-sm text-sm text-redhat-black focus:outline-hidden focus:border-l-4 focus:border-l-redhat-red focus:border-redhat-gray-dark transition-all bg-white font-mono"
               />
             </div>
 
@@ -190,17 +213,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
               <span>{isLoading ? 'Verifying Student...' : 'Proceed to Instructions'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
-
-            {/* Quick Demo Pre-fill */}
-            <div className="pt-2 text-center">
-              <button
-                type="button"
-                onClick={handleFillDemoStudent}
-                className="text-[11px] text-neutral-500 hover:text-redhat-red underline font-mono cursor-pointer"
-              >
-                Auto-fill demo student credentials
-              </button>
-            </div>
           </form>
         )}
 

@@ -178,17 +178,19 @@ The client will start on `http://localhost:5173`. Open this URL in your web brow
 
 ---
 
-## 🔑 Default Credentials for RHA DAY 26
+## 🔑 Authentication & Access Control
 
-### 👨‍🎓 Student Access
-- **Roll Number**: Any string (e.g. `0208CS221001`)
-- **Full Name**: Candidate name (e.g. `Aman Verma`)
-- *Note*: You can click the **"Auto-fill demo student credentials"** link on the login page for instantaneous testing.
+### 👨‍🎓 Student Candidate Verification
+All 4 fields are strictly compulsory to authenticate and initialize a verified examination session:
+- **College Roll Number** (e.g., student university roll number)
+- **Full Name** (official name for evaluation & certificate)
+- **College Email Address** (must be a valid email format)
+- **Phone / WhatsApp Number** (10-digit mobile number)
 
-### 🛡️ Coordinator / Admin Access
+### 🛡️ Coordinator / Admin Console Access
 - Navigate to the **"Coordinator / Admin"** tab on the login screen.
-- Click **"Enter Admin Console"** for direct administrative access.
-- Grants full access to real-time candidate metrics, violation audit logs, snapshot review, settings configuration, and CSV export.
+- Enter the secure **Coordinator Passcode** (configured in environment variable `ADMIN_PASSCODE`).
+- Grants full access to real-time candidate metrics, violation telemetry, webcam captures, test settings, and CSV export.
 
 ---
 
