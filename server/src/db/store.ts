@@ -286,6 +286,7 @@ class DataStore {
   private mapDbSubmission(data: any): Submission {
     if (!data) return data;
     const sub = { ...data } as Submission;
+    sub.violations_count = sub.violations_count || 0;
     if (sub.disqualification_reason === 'AUTO_SUBMITTED') {
       sub.status = 'auto_submitted';
     } else if (sub.disqualification_reason === 'INCOMPLETE') {
