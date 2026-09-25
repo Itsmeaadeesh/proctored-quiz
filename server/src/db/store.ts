@@ -347,9 +347,7 @@ class DataStore {
     submission.time_taken_seconds = timeSpentSeconds;
 
     // Calculate score
-    const questions = Array.from(this.questions.values()).filter(
-      (q) => q.quiz_id === submission.quiz_id
-    );
+    const questions = (await this.getQuestions(submission.quiz_id, false)) as Question[];
 
     let score = 0;
     questions.forEach((q) => {

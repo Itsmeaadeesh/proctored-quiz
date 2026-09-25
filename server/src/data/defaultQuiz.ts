@@ -14,7 +14,7 @@ export const DEFAULT_QUIZ: Quiz = {
 
 export const DEFAULT_QUESTIONS: Question[] = [
   {
-    id: 'q-101',
+    id: '22222222-2222-2222-2222-222222220001',
     quiz_id: DEFAULT_QUIZ.id,
     text: 'Which init system and service manager is the default standard in modern Red Hat Enterprise Linux (RHEL 7, 8, and 9)?',
     type: 'mcq_single',
@@ -24,7 +24,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
     order_index: 1,
   },
   {
-    id: 'q-102',
+    id: '22222222-2222-2222-2222-222222220002',
     quiz_id: DEFAULT_QUIZ.id,
     text: 'In Red Hat Enterprise Linux 8 and 9, what tool is provided as the native daemonless, rootless container engine alternative to Docker?',
     type: 'mcq_single',
@@ -34,7 +34,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
     order_index: 2,
   },
   {
-    id: 'q-103',
+    id: '22222222-2222-2222-2222-222222220003',
     quiz_id: DEFAULT_QUIZ.id,
     text: 'Which command puts SELinux temporarily into Permissive mode without requiring a system reboot?',
     type: 'mcq_single',
@@ -44,7 +44,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
     order_index: 3,
   },
   {
-    id: 'q-104',
+    id: '22222222-2222-2222-2222-222222220004',
     quiz_id: DEFAULT_QUIZ.id,
     text: 'Which modern package manager based on libsolv replaced yum as the primary CLI tool in RHEL 8 and RHEL 9?',
     type: 'mcq_single',
@@ -54,7 +54,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
     order_index: 4,
   },
   {
-    id: 'q-105',
+    id: '22222222-2222-2222-2222-222222220005',
     quiz_id: DEFAULT_QUIZ.id,
     text: 'What structured data serialization language is strictly used to author Ansible Playbooks?',
     type: 'mcq_single',
@@ -64,7 +64,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
     order_index: 5,
   },
   {
-    id: 'q-106',
+    id: '22222222-2222-2222-2222-222222220006',
     quiz_id: DEFAULT_QUIZ.id,
     text: 'What is the numeric octal notation for file permissions represented by "rwxr-xr--"?',
     type: 'mcq_single',
@@ -74,7 +74,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
     order_index: 6,
   },
   {
-    id: 'q-107',
+    id: '22222222-2222-2222-2222-222222220007',
     quiz_id: DEFAULT_QUIZ.id,
     text: 'Which text user interface (TUI) command in RHEL is used to interactively configure NetworkManager IP addresses and connections?',
     type: 'short_answer',
@@ -84,7 +84,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
     order_index: 7,
   },
   {
-    id: 'q-108',
+    id: '22222222-2222-2222-2222-222222220008',
     quiz_id: DEFAULT_QUIZ.id,
     text: 'What is the default filesystem for storage partitions created during standard installation of Red Hat Enterprise Linux?',
     type: 'mcq_single',
@@ -94,7 +94,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
     order_index: 8,
   },
   {
-    id: 'q-109',
+    id: '22222222-2222-2222-2222-222222220009',
     quiz_id: DEFAULT_QUIZ.id,
     text: 'Which command in Git rewrites history by reapplying commits from the current branch onto the tip of another branch linearly?',
     type: 'mcq_single',
@@ -104,7 +104,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
     order_index: 9,
   },
   {
-    id: 'q-110',
+    id: '22222222-2222-2222-2222-222222220010',
     quiz_id: DEFAULT_QUIZ.id,
     text: 'In Linux process management, which signal number corresponds to SIGKILL (unconditional immediate process termination)?',
     type: 'mcq_single',
