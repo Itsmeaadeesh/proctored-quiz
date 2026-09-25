@@ -27,7 +27,51 @@ import {
   RefreshCw,
   Crown,
   AlertTriangle,
+  FileText,
+  CheckCircle2,
+  XCircle,
+  HelpCircle,
+  Calendar,
 } from 'lucide-react';
+
+// Format timestamp to India Standard Time (IST) Date & Time
+const formatDateTimeIST = (isoString?: string): string => {
+  if (!isoString) return '--';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    return d.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return isoString;
+  }
+};
+
+// Format timestamp to India Standard Time (IST) Time only (HH:MM:SS AM/PM)
+const formatTimeOnlyIST = (isoString?: string): string => {
+  if (!isoString) return '--';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    return d.toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return isoString;
+  }
+};
 
 export const AdminDashboardPage: React.FC = () => {
   const [adminTab, setAdminTab] = useState<'leaderboard' | 'audit'>('leaderboard');
@@ -46,8 +90,10 @@ export const AdminDashboardPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'submitted' | 'auto_submitted' | 'incomplete' | 'disqualified'>('all');
 
-  // Selected student audit modal
+  // Selected student audit & quiz report modal
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
+  const [modalTab, setModalTab] = useState<'report' | 'timeline' | 'snapshots'>('report');
+  const [reportQuestionFilter, setReportQuestionFilter] = useState<'all' | 'correct' | 'incorrect' | 'unanswered'>('all');
   const [auditDetails, setAuditDetails] = useState<{
     submission: Submission;
     violations: Violation[];
@@ -100,8 +146,10 @@ export const AdminDashboardPage: React.FC = () => {
     loadData();
   }, []);
 
-  const handleOpenAudit = async (subId: string) => {
+  const handleOpenAudit = async (subId: string, initialTab: 'report' | 'timeline' = 'report') => {
     setSelectedSubId(subId);
+    setModalTab(initialTab);
+    setReportQuestionFilter('all');
     setAuditLoading(true);
     try {
       const details = await api.getSubmissionDetails(subId);
@@ -150,7 +198,7 @@ export const AdminDashboardPage: React.FC = () => {
     return true;
   });
 
-  // Top 3 Podium Candidates (from overall non-disqualified ranked entries)
+  // Top 3 Podium Candidates
   const eligibleForPodium = leaderboard.filter((s) => !s.disqualified);
   const top1 = eligibleForPodium[0] || null;
   const top2 = eligibleForPodium[1] || null;
@@ -184,6 +232,82 @@ export const AdminDashboardPage: React.FC = () => {
     (s) => (s.violations_count || 0) === 0 && !s.disqualified
   ).length;
 
+  // Question-by-question analysis for candidate report
+  let analyzedQuestions: Array<{
+    question: Question;
+    index: number;
+    studentAns: any;
+    isUnanswered: boolean;
+    isCorrect: boolean;
+  }> = [];
+
+  let reportStats = {
+    total: 0,
+    attempted: 0,
+    correct: 0,
+    incorrect: 0,
+    unanswered: 0,
+    score: 0,
+    totalMarks: 60,
+  };
+
+  if (auditDetails && auditDetails.questions) {
+    const answers = auditDetails.submission.answers || {};
+    reportStats.total = auditDetails.questions.length;
+    reportStats.score = auditDetails.submission.score;
+    reportStats.totalMarks = auditDetails.submission.total_marks || 60;
+
+    analyzedQuestions = auditDetails.questions.map((q, idx) => {
+      const studentAns = answers[q.id];
+      const isUnanswered = studentAns === undefined || studentAns === null || studentAns === '';
+      let isCorrect = false;
+
+      if (!isUnanswered) {
+        if (q.type === 'short_answer') {
+          isCorrect =
+            String(q.correct_answer || '').trim().toLowerCase() ===
+            String(studentAns || '').trim().toLowerCase();
+        } else if (q.type === 'mcq_multiple') {
+          const expected = Array.isArray(q.correct_answer)
+            ? [...q.correct_answer].sort()
+            : [q.correct_answer];
+          const given = Array.isArray(studentAns)
+            ? [...studentAns].sort()
+            : [studentAns];
+          isCorrect = JSON.stringify(expected) === JSON.stringify(given);
+        } else {
+          // mcq_single
+          isCorrect = String(q.correct_answer || '').trim() === String(studentAns || '').trim();
+        }
+      }
+
+      if (isUnanswered) {
+        reportStats.unanswered++;
+      } else if (isCorrect) {
+        reportStats.correct++;
+        reportStats.attempted++;
+      } else {
+        reportStats.incorrect++;
+        reportStats.attempted++;
+      }
+
+      return {
+        question: q,
+        index: idx + 1,
+        studentAns,
+        isUnanswered,
+        isCorrect,
+      };
+    });
+  }
+
+  const filteredQuestions = analyzedQuestions.filter((item) => {
+    if (reportQuestionFilter === 'correct') return item.isCorrect;
+    if (reportQuestionFilter === 'incorrect') return !item.isUnanswered && !item.isCorrect;
+    if (reportQuestionFilter === 'unanswered') return item.isUnanswered;
+    return true;
+  });
+
   return (
     <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
       {/* Header with Title & Action Controls */}
@@ -201,7 +325,7 @@ export const AdminDashboardPage: React.FC = () => {
             RHA DAY 26 Examination Command Center
           </h1>
           <p className="text-xs text-neutral-500 mt-1">
-            Gyan Ganga Institute of Technology &amp; Sciences &bull; Real-time Proctored Leaderboard &amp; Audit Logs
+            Gyan Ganga Institute of Technology &amp; Sciences &bull; Real-time Proctored Leaderboard, Quiz Reports &amp; Audit Logs
           </p>
         </div>
 
@@ -411,6 +535,18 @@ export const AdminDashboardPage: React.FC = () => {
                             </span>
                           </div>
                           <div className="flex justify-between text-xs">
+                            <span className="text-neutral-500">Started:</span>
+                            <span className="font-mono font-bold text-neutral-700">
+                              {formatTimeOnlyIST(top2.created_at)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-neutral-500">Submitted:</span>
+                            <span className="font-mono font-bold text-neutral-700">
+                              {formatTimeOnlyIST(top2.submitted_at || top2.created_at)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs pt-1 border-t border-slate-100">
                             <span className="text-neutral-500">Integrity:</span>
                             <span className={`font-mono font-bold ${top2.violations_count > 0 ? 'text-redhat-red' : 'text-emerald-700'}`}>
                               {top2.violations_count > 0 ? `${top2.violations_count} violation(s)` : 'Clean Record'}
@@ -420,11 +556,11 @@ export const AdminDashboardPage: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => handleOpenAudit(top2.id)}
+                        onClick={() => handleOpenAudit(top2.id, 'report')}
                         className="w-full py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold uppercase rounded-xs transition-colors cursor-pointer flex items-center justify-center space-x-1"
                       >
-                        <Eye className="w-3 h-3" />
-                        <span>Inspect Submission</span>
+                        <FileText className="w-3 h-3 text-slate-600" />
+                        <span>View Quiz Report</span>
                       </button>
                     </>
                   ) : (
@@ -489,6 +625,18 @@ export const AdminDashboardPage: React.FC = () => {
                             </span>
                           </div>
                           <div className="flex justify-between text-xs">
+                            <span className="text-neutral-600">Started:</span>
+                            <span className="font-mono font-bold text-redhat-black">
+                              {formatTimeOnlyIST(top1.created_at)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-neutral-600">Submitted:</span>
+                            <span className="font-mono font-bold text-redhat-black">
+                              {formatTimeOnlyIST(top1.submitted_at || top1.created_at)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs pt-1 border-t border-amber-200">
                             <span className="text-neutral-600">Proctoring Telemetry:</span>
                             <span className={`font-mono font-bold ${top1.violations_count > 0 ? 'text-redhat-red' : 'text-emerald-700'}`}>
                               {top1.violations_count > 0 ? `${top1.violations_count} violation(s)` : '100% Clean Record'}
@@ -498,11 +646,11 @@ export const AdminDashboardPage: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => handleOpenAudit(top1.id)}
-                        className="w-full py-2 bg-redhat-red hover:bg-redhat-red-dark text-white text-xs font-black uppercase tracking-wider rounded-xs transition-colors cursor-pointer flex items-center justify-center space-x-1 shadow-xs"
+                        onClick={() => handleOpenAudit(top1.id, 'report')}
+                        className="w-full py-2 bg-redhat-red hover:bg-redhat-red-dark text-white text-xs font-black uppercase tracking-wider rounded-xs transition-colors cursor-pointer flex items-center justify-center space-x-1.5 shadow-xs"
                       >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Inspect Champion Audit</span>
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Inspect Champion Quiz Report</span>
                       </button>
                     </>
                   ) : (
@@ -556,6 +704,18 @@ export const AdminDashboardPage: React.FC = () => {
                             </span>
                           </div>
                           <div className="flex justify-between text-xs">
+                            <span className="text-neutral-500">Started:</span>
+                            <span className="font-mono font-bold text-neutral-700">
+                              {formatTimeOnlyIST(top3.created_at)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-neutral-500">Submitted:</span>
+                            <span className="font-mono font-bold text-neutral-700">
+                              {formatTimeOnlyIST(top3.submitted_at || top3.created_at)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs pt-1 border-t border-amber-100">
                             <span className="text-neutral-500">Integrity:</span>
                             <span className={`font-mono font-bold ${top3.violations_count > 0 ? 'text-redhat-red' : 'text-emerald-700'}`}>
                               {top3.violations_count > 0 ? `${top3.violations_count} violation(s)` : 'Clean Record'}
@@ -565,11 +725,11 @@ export const AdminDashboardPage: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => handleOpenAudit(top3.id)}
+                        onClick={() => handleOpenAudit(top3.id, 'report')}
                         className="w-full py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 text-[11px] font-bold uppercase rounded-xs transition-colors cursor-pointer flex items-center justify-center space-x-1"
                       >
-                        <Eye className="w-3 h-3" />
-                        <span>Inspect Submission</span>
+                        <FileText className="w-3 h-3 text-amber-700" />
+                        <span>View Quiz Report</span>
                       </button>
                     </>
                   ) : (
@@ -611,18 +771,18 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Full Ranked Leaderboard Table */}
+          {/* Full Ranked Leaderboard Table with Start/End Times */}
           <div className="bg-white border border-redhat-gray-border rounded-sm shadow-xs overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-redhat-black text-white text-xs uppercase font-black tracking-wider border-b-2 border-redhat-red">
                   <th className="py-3.5 px-4 text-center w-16">Rank</th>
-                  <th className="py-3.5 px-4">Candidate Information</th>
+                  <th className="py-3.5 px-4">Candidate Details</th>
                   <th className="py-3.5 px-4 text-center">Score (Max 60)</th>
-                  <th className="py-3.5 px-4 text-center">Time Spent</th>
+                  <th className="py-3.5 px-4 text-center">Duration &amp; Timestamps</th>
                   <th className="py-3.5 px-4 text-center">Integrity</th>
                   <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Audit</th>
+                  <th className="py-3.5 px-4 text-right">Quiz Report &amp; Audit</th>
                 </tr>
               </thead>
               <tbody className="text-xs divide-y divide-redhat-gray-border">
@@ -694,12 +854,21 @@ export const AdminDashboardPage: React.FC = () => {
                             {item.score} <span className="text-[10px] text-neutral-400">/ {item.total_marks}</span>
                           </div>
                           <div className="text-[10px] font-mono text-neutral-500 font-bold mt-0.5">
-                            {pct}%
+                            {pct}% Accuracy
                           </div>
                         </td>
-                        <td className="py-3.5 px-4 text-center font-mono text-neutral-700 font-medium">
-                          {Math.floor((item.time_taken_seconds || 0) / 60)}m{' '}
-                          {(item.time_taken_seconds || 0) % 60}s
+                        <td className="py-3.5 px-4 text-center font-mono">
+                          <div className="font-bold text-neutral-800 text-xs flex items-center justify-center space-x-1">
+                            <Clock className="w-3 h-3 text-neutral-400" />
+                            <span>
+                              {Math.floor((item.time_taken_seconds || 0) / 60)}m {(item.time_taken_seconds || 0) % 60}s
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-neutral-500 font-mono mt-0.5" title={`Start: ${formatDateTimeIST(item.created_at)} | End: ${formatDateTimeIST(item.submitted_at || item.created_at)}`}>
+                            <span className="text-neutral-700 font-semibold">{formatTimeOnlyIST(item.created_at)}</span>
+                            <span className="text-neutral-400 mx-1">&rarr;</span>
+                            <span className="text-neutral-700 font-semibold">{formatTimeOnlyIST(item.submitted_at || item.created_at)}</span>
+                          </div>
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           <span
@@ -737,12 +906,12 @@ export const AdminDashboardPage: React.FC = () => {
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           <button
-                            onClick={() => handleOpenAudit(item.id)}
-                            className="p-1.5 text-neutral-600 hover:text-redhat-red transition-colors inline-flex items-center space-x-1 font-bold cursor-pointer"
-                            title="Inspect detailed student timeline & proctoring snapshots"
+                            onClick={() => handleOpenAudit(item.id, 'report')}
+                            className="px-2.5 py-1.5 bg-neutral-100 hover:bg-red-50 hover:text-redhat-red text-neutral-800 rounded-xs font-bold text-[11px] inline-flex items-center space-x-1.5 transition-colors cursor-pointer border border-neutral-300"
+                            title="Inspect candidate's question-by-question answer sheet & timing"
                           >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Audit</span>
+                            <FileText className="w-3.5 h-3.5 text-redhat-red" />
+                            <span>Quiz Report</span>
                           </button>
                         </td>
                       </tr>
@@ -849,7 +1018,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Submissions Data Table */}
+          {/* Submissions Data Table with Start/End Times */}
           <div className="bg-white border border-redhat-gray-border rounded-sm shadow-xs overflow-x-auto mb-10">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -858,9 +1027,9 @@ export const AdminDashboardPage: React.FC = () => {
                   <th className="py-3 px-4">Candidate Name</th>
                   <th className="py-3 px-4 text-center">Score</th>
                   <th className="py-3 px-4 text-center">Violations</th>
-                  <th className="py-3 px-4">Time Spent</th>
+                  <th className="py-3 px-4 text-center">Time &amp; Timestamps</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Audit</th>
+                  <th className="py-3 px-4 text-right">Inspect</th>
                 </tr>
               </thead>
               <tbody className="text-xs divide-y divide-redhat-gray-border">
@@ -902,9 +1071,14 @@ export const AdminDashboardPage: React.FC = () => {
                             {sub.violations_count || 0}
                           </span>
                         </td>
-                        <td className="py-3 px-4 font-mono text-neutral-600">
-                          {Math.floor((sub.time_taken_seconds || 0) / 60)}m{' '}
-                          {(sub.time_taken_seconds || 0) % 60}s
+                        <td className="py-3 px-4 text-center font-mono">
+                          <div className="font-bold text-neutral-700">
+                            {Math.floor((sub.time_taken_seconds || 0) / 60)}m{' '}
+                            {(sub.time_taken_seconds || 0) % 60}s
+                          </div>
+                          <div className="text-[10px] text-neutral-400">
+                            {formatTimeOnlyIST(sub.created_at)} &rarr; {formatTimeOnlyIST(sub.submitted_at || sub.created_at)}
+                          </div>
                         </td>
                         <td className="py-3 px-4">
                           {sub.disqualified ? (
@@ -931,9 +1105,9 @@ export const AdminDashboardPage: React.FC = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <button
-                            onClick={() => handleOpenAudit(sub.id)}
+                            onClick={() => handleOpenAudit(sub.id, 'report')}
                             className="p-1.5 text-neutral-600 hover:text-redhat-red transition-colors inline-flex items-center space-x-1 font-bold cursor-pointer"
-                            title="View Detailed Student Timeline & Snapshots"
+                            title="View Full Question-by-Question Report & Snapshots"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>Inspect</span>
@@ -949,18 +1123,28 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* STUDENT AUDIT DRAWER / MODAL */}
+      {/* ======================================================== */}
+      {/* CANDIDATE AUDIT & FULL QUIZ REPORT MODAL                 */}
+      {/* ======================================================== */}
       {selectedSubId && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border-2 border-redhat-black rounded-sm max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+          <div className="bg-white border-2 border-redhat-black rounded-sm max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
             {/* Modal Header */}
             <div className="bg-redhat-black text-white p-4 sm:p-5 flex items-center justify-between border-b-2 border-redhat-red">
               <div>
-                <h3 className="text-base font-black font-display uppercase tracking-wider text-white">
-                  Candidate Integrity Audit &bull; {auditDetails?.submission.student_name}
+                <div className="flex items-center space-x-2">
+                  <span className="text-[10px] font-mono tracking-widest text-redhat-red uppercase font-black bg-red-950/60 border border-red-800/80 px-2 py-0.5 rounded-xs">
+                    OFFICIAL EXAMINATION REPORT
+                  </span>
+                  <span className="text-[10px] font-mono text-neutral-400 font-bold uppercase">
+                    • {auditDetails?.submission.status.toUpperCase()}
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black font-display uppercase tracking-wider text-white mt-1">
+                  {auditDetails?.submission.student_name}
                 </h3>
                 <p className="text-xs text-neutral-400 font-mono">
-                  Roll No: {auditDetails?.submission.student_roll_no} &bull; Score: {auditDetails?.submission.score}/{auditDetails?.submission.total_marks}
+                  Roll No: <span className="text-white font-bold">{auditDetails?.submission.student_roll_no}</span>
                   {auditDetails?.submission.student_email && ` • Email: ${auditDetails?.submission.student_email}`}
                   {auditDetails?.submission.student_phone && ` • Phone: ${auditDetails?.submission.student_phone}`}
                 </p>
@@ -970,116 +1154,450 @@ export const AdminDashboardPage: React.FC = () => {
                   setSelectedSubId(null);
                   setAuditDetails(null);
                 }}
-                className="text-neutral-400 hover:text-white p-1 cursor-pointer"
+                className="text-neutral-400 hover:text-white p-1.5 cursor-pointer bg-neutral-900 hover:bg-neutral-800 rounded-sm"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
+            {/* Exam Timing & Score Summary Card */}
+            {auditDetails && (
+              <div className="bg-neutral-900 text-white p-4 border-b border-neutral-800 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="border-l-2 border-amber-400 pl-2.5">
+                  <div className="text-[10px] uppercase font-bold text-neutral-400 flex items-center space-x-1">
+                    <Calendar className="w-3 h-3 text-amber-400" />
+                    <span>Started At</span>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-white mt-0.5">
+                    {formatDateTimeIST(auditDetails.submission.created_at)}
+                  </div>
+                </div>
+
+                <div className="border-l-2 border-emerald-400 pl-2.5">
+                  <div className="text-[10px] uppercase font-bold text-neutral-400 flex items-center space-x-1">
+                    <CheckCircle className="w-3 h-3 text-emerald-400" />
+                    <span>Submitted At</span>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-white mt-0.5">
+                    {formatDateTimeIST(auditDetails.submission.submitted_at || auditDetails.submission.created_at)}
+                  </div>
+                </div>
+
+                <div className="border-l-2 border-sky-400 pl-2.5">
+                  <div className="text-[10px] uppercase font-bold text-neutral-400 flex items-center space-x-1">
+                    <Clock className="w-3 h-3 text-sky-400" />
+                    <span>Total Duration</span>
+                  </div>
+                  <div className="text-xs font-mono font-black text-white mt-0.5">
+                    {Math.floor((auditDetails.submission.time_taken_seconds || 0) / 60)}m{' '}
+                    {(auditDetails.submission.time_taken_seconds || 0) % 60}s
+                  </div>
+                </div>
+
+                <div className="border-l-2 border-redhat-red pl-2.5">
+                  <div className="text-[10px] uppercase font-bold text-neutral-400 flex items-center space-x-1">
+                    <Award className="w-3 h-3 text-redhat-red" />
+                    <span>Final Score</span>
+                  </div>
+                  <div className="text-sm font-mono font-black text-redhat-red mt-0.5">
+                    {auditDetails.submission.score} / {auditDetails.submission.total_marks || 60}{' '}
+                    <span className="text-[10px] text-neutral-400 font-normal">
+                      ({(((auditDetails.submission.score || 0) / (auditDetails.submission.total_marks || 60)) * 100).toFixed(1)}%)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Internal Tabs */}
+            <div className="flex border-b border-redhat-gray-border bg-neutral-100 px-4 pt-2 gap-2 text-xs">
+              <button
+                onClick={() => setModalTab('report')}
+                className={`py-2 px-3 font-bold uppercase flex items-center space-x-1.5 border-b-2 cursor-pointer transition-colors ${
+                  modalTab === 'report'
+                    ? 'border-redhat-red text-redhat-red bg-white rounded-t-sm shadow-2xs'
+                    : 'border-transparent text-neutral-600 hover:text-redhat-black'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Quiz Report &amp; Answer Sheet ({auditDetails?.questions?.length || 0})</span>
+              </button>
+
+              <button
+                onClick={() => setModalTab('timeline')}
+                className={`py-2 px-3 font-bold uppercase flex items-center space-x-1.5 border-b-2 cursor-pointer transition-colors ${
+                  modalTab === 'timeline'
+                    ? 'border-redhat-red text-redhat-red bg-white rounded-t-sm shadow-2xs'
+                    : 'border-transparent text-neutral-600 hover:text-redhat-black'
+                }`}
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>Cheating Violations ({auditDetails?.violations?.length || 0})</span>
+              </button>
+
+              <button
+                onClick={() => setModalTab('snapshots')}
+                className={`py-2 px-3 font-bold uppercase flex items-center space-x-1.5 border-b-2 cursor-pointer transition-colors ${
+                  modalTab === 'snapshots'
+                    ? 'border-redhat-red text-redhat-red bg-white rounded-t-sm shadow-2xs'
+                    : 'border-transparent text-neutral-600 hover:text-redhat-black'
+                }`}
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Webcam Snapshots ({auditDetails?.snapshots?.length || 0})</span>
+              </button>
+            </div>
+
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs bg-neutral-50/50">
               {auditLoading ? (
-                <div className="text-center py-12 text-neutral-500">
-                  Loading candidate incident logs and snapshots...
+                <div className="text-center py-16 text-neutral-500">
+                  <RefreshCw className="w-6 h-6 animate-spin mx-auto text-redhat-red mb-2" />
+                  <span>Loading candidate question breakdown and audit timeline...</span>
                 </div>
               ) : auditDetails ? (
                 <>
-                  {/* Summary Bar */}
-                  <div className="grid grid-cols-3 gap-4 bg-redhat-gray-light p-4 rounded-xs border border-redhat-gray-border text-center">
-                    <div>
-                      <div className="text-neutral-500 uppercase font-bold">Total Violations</div>
-                      <div className="text-xl font-black text-redhat-red font-mono">
-                        {auditDetails.violations.length}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-neutral-500 uppercase font-bold">Snapshots Captured</div>
-                      <div className="text-xl font-black text-neutral-800 font-mono">
-                        {auditDetails.snapshots.length}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-neutral-500 uppercase font-bold">Submission Status</div>
-                      <div className="text-sm font-bold mt-1 text-redhat-black uppercase">
-                        {auditDetails.submission.disqualified ? 'Disqualified' : auditDetails.submission.status}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Anti-Cheating Violation Timeline */}
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-redhat-black mb-2 flex items-center space-x-1.5">
-                      <ShieldAlert className="w-3.5 h-3.5 text-redhat-red" />
-                      <span>Chronological Incident Timeline</span>
-                    </h4>
-
-                    {auditDetails.violations.length === 0 ? (
-                      <p className="text-neutral-500 p-3 bg-neutral-50 rounded-xs">
-                        No integrity violations recorded for this candidate. Clean session!
-                      </p>
-                    ) : (
-                      <div className="border border-redhat-gray-border rounded-xs divide-y divide-neutral-200">
-                        {auditDetails.violations.map((v, i) => (
-                          <div key={i} className="p-2.5 flex items-center justify-between bg-white">
-                            <div>
-                              <span className="font-bold text-redhat-red font-mono mr-2">
-                                [{v.type}]
-                              </span>
-                              <span className="text-neutral-700">
-                                {v.meta?.action || v.meta?.reason || v.meta?.key || 'Security incident recorded'}
-                              </span>
-                            </div>
-                            <span className="text-neutral-400 font-mono text-[11px]">
-                              {new Date(v.timestamp).toLocaleTimeString()}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Proctor Webcam Snapshots Gallery */}
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-redhat-black mb-2 flex items-center space-x-1.5">
-                      <Camera className="w-3.5 h-3.5 text-neutral-700" />
-                      <span>Webcam Verification Captures</span>
-                    </h4>
-
-                    {auditDetails.snapshots.length === 0 ? (
-                      <p className="text-neutral-500 p-3 bg-neutral-50 rounded-xs">
-                        No snapshots available (camera was either disabled or unmounted).
-                      </p>
-                    ) : (
+                  {/* ======================================================== */}
+                  {/* MODAL TAB 1: FULL QUIZ REPORT & ANSWER SHEET             */}
+                  {/* ======================================================== */}
+                  {modalTab === 'report' && (
+                    <div className="space-y-5 animate-in fade-in-50 duration-150">
+                      {/* Detailed Question Counters */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {auditDetails.snapshots.map((snap, i) => (
-                          <div key={i} className="border border-neutral-300 rounded-xs overflow-hidden bg-black text-center">
-                            <img
-                              src={snap.image_url}
-                              alt={`Capture ${i + 1}`}
-                              className="w-full h-24 object-cover"
-                            />
-                            <div className="text-[10px] text-white p-1 bg-neutral-900 font-mono">
-                              {new Date(snap.timestamp).toLocaleTimeString()}
-                            </div>
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-sm p-3 text-center">
+                          <div className="text-[10px] uppercase font-bold text-emerald-700 flex items-center justify-center space-x-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Correct Answers</span>
                           </div>
-                        ))}
+                          <div className="text-2xl font-black font-mono text-emerald-800 mt-1">
+                            {reportStats.correct}
+                          </div>
+                          <div className="text-[10px] text-emerald-600 font-mono mt-0.5">
+                            +{reportStats.correct} Marks
+                          </div>
+                        </div>
+
+                        <div className="bg-red-50 border border-red-200 rounded-sm p-3 text-center">
+                          <div className="text-[10px] uppercase font-bold text-redhat-red flex items-center justify-center space-x-1">
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Incorrect Answers</span>
+                          </div>
+                          <div className="text-2xl font-black font-mono text-redhat-red mt-1">
+                            {reportStats.incorrect}
+                          </div>
+                          <div className="text-[10px] text-red-600 font-mono mt-0.5">
+                            0 Marks
+                          </div>
+                        </div>
+
+                        <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 text-center">
+                          <div className="text-[10px] uppercase font-bold text-amber-700 flex items-center justify-center space-x-1">
+                            <HelpCircle className="w-3.5 h-3.5" />
+                            <span>Unanswered / Skipped</span>
+                          </div>
+                          <div className="text-2xl font-black font-mono text-amber-800 mt-1">
+                            {reportStats.unanswered}
+                          </div>
+                          <div className="text-[10px] text-amber-600 font-mono mt-0.5">
+                            0 Marks
+                          </div>
+                        </div>
+
+                        <div className="bg-neutral-100 border border-neutral-300 rounded-sm p-3 text-center">
+                          <div className="text-[10px] uppercase font-bold text-neutral-700 flex items-center justify-center space-x-1">
+                            <Users className="w-3.5 h-3.5" />
+                            <span>Attempt Rate</span>
+                          </div>
+                          <div className="text-2xl font-black font-mono text-neutral-800 mt-1">
+                            {reportStats.total > 0
+                              ? Math.round((reportStats.attempted / reportStats.total) * 100)
+                              : 0}%
+                          </div>
+                          <div className="text-[10px] text-neutral-500 font-mono mt-0.5">
+                            {reportStats.attempted} / {reportStats.total} Questions
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
+
+                      {/* Filter Answer Chips */}
+                      <div className="flex items-center space-x-2 flex-wrap gap-y-1.5 pt-1">
+                        <span className="text-xs font-bold text-neutral-600 mr-1">Filter View:</span>
+                        <button
+                          onClick={() => setReportQuestionFilter('all')}
+                          className={`px-3 py-1 text-xs font-bold rounded-full transition-colors cursor-pointer ${
+                            reportQuestionFilter === 'all'
+                              ? 'bg-redhat-black text-white'
+                              : 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-100'
+                          }`}
+                        >
+                          All Questions ({analyzedQuestions.length})
+                        </button>
+
+                        <button
+                          onClick={() => setReportQuestionFilter('correct')}
+                          className={`px-3 py-1 text-xs font-bold rounded-full transition-colors cursor-pointer flex items-center space-x-1 ${
+                            reportQuestionFilter === 'correct'
+                              ? 'bg-emerald-700 text-white'
+                              : 'bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Correct ({reportStats.correct})</span>
+                        </button>
+
+                        <button
+                          onClick={() => setReportQuestionFilter('incorrect')}
+                          className={`px-3 py-1 text-xs font-bold rounded-full transition-colors cursor-pointer flex items-center space-x-1 ${
+                            reportQuestionFilter === 'incorrect'
+                              ? 'bg-redhat-red text-white'
+                              : 'bg-red-50 border border-red-300 text-redhat-red hover:bg-red-100'
+                          }`}
+                        >
+                          <XCircle className="w-3 h-3" />
+                          <span>Incorrect ({reportStats.incorrect})</span>
+                        </button>
+
+                        <button
+                          onClick={() => setReportQuestionFilter('unanswered')}
+                          className={`px-3 py-1 text-xs font-bold rounded-full transition-colors cursor-pointer flex items-center space-x-1 ${
+                            reportQuestionFilter === 'unanswered'
+                              ? 'bg-amber-700 text-white'
+                              : 'bg-amber-50 border border-amber-300 text-amber-800 hover:bg-amber-100'
+                          }`}
+                        >
+                          <HelpCircle className="w-3 h-3" />
+                          <span>Unanswered ({reportStats.unanswered})</span>
+                        </button>
+                      </div>
+
+                      {/* Question Cards List */}
+                      <div className="space-y-4">
+                        {filteredQuestions.length === 0 ? (
+                          <div className="text-center py-10 bg-white border border-neutral-200 rounded-sm text-neutral-500">
+                            No questions match the selected filter.
+                          </div>
+                        ) : (
+                          filteredQuestions.map((item) => {
+                            const q = item.question;
+                            const options = q.options || [];
+
+                            return (
+                              <div
+                                key={q.id}
+                                className={`p-4 rounded-sm border transition-shadow bg-white shadow-2xs ${
+                                  item.isCorrect
+                                    ? 'border-emerald-300'
+                                    : item.isUnanswered
+                                    ? 'border-amber-300'
+                                    : 'border-red-300'
+                                }`}
+                              >
+                                {/* Question Header */}
+                                <div className="flex items-center justify-between pb-2 mb-2 border-b border-neutral-200">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-mono font-black text-xs text-neutral-800 bg-neutral-100 px-2 py-0.5 rounded-xs">
+                                      Q{item.index} of {analyzedQuestions.length}
+                                    </span>
+                                    <span className="text-[11px] text-neutral-500 font-mono">
+                                      ({q.marks || 1} Mark)
+                                    </span>
+                                  </div>
+
+                                  <div>
+                                    {item.isCorrect ? (
+                                      <span className="inline-flex items-center space-x-1 bg-emerald-100 text-emerald-800 font-mono font-bold text-[11px] px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                        <CheckCircle2 className="w-3 h-3 text-emerald-700" />
+                                        <span>Correct (+1)</span>
+                                      </span>
+                                    ) : item.isUnanswered ? (
+                                      <span className="inline-flex items-center space-x-1 bg-amber-100 text-amber-800 font-mono font-bold text-[11px] px-2.5 py-0.5 rounded-full border border-amber-200">
+                                        <HelpCircle className="w-3 h-3 text-amber-700" />
+                                        <span>Not Answered (0)</span>
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center space-x-1 bg-red-100 text-redhat-red font-mono font-bold text-[11px] px-2.5 py-0.5 rounded-full border border-red-200">
+                                        <XCircle className="w-3 h-3 text-redhat-red" />
+                                        <span>Incorrect (0)</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Question Text */}
+                                <p className="text-xs sm:text-sm font-bold text-redhat-black mb-3">
+                                  {q.text}
+                                </p>
+
+                                {/* Options Breakdown */}
+                                {options.length > 0 ? (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                    {options.map((opt, oIdx) => {
+                                      const isCorrectOpt = String(q.correct_answer || '').trim() === String(opt).trim();
+                                      const isSelectedOpt = String(item.studentAns || '').trim() === String(opt).trim();
+
+                                      let optStyle = 'bg-neutral-50 border-neutral-200 text-neutral-700';
+                                      let optBadge: React.ReactNode = null;
+
+                                      if (isSelectedOpt && isCorrectOpt) {
+                                        optStyle = 'bg-emerald-50 border-emerald-500 text-emerald-950 font-bold ring-1 ring-emerald-500';
+                                        optBadge = (
+                                          <span className="text-[10px] font-mono text-emerald-700 uppercase font-black ml-auto pl-2 flex items-center space-x-1">
+                                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                            <span>Student Selected (Correct)</span>
+                                          </span>
+                                        );
+                                      } else if (isSelectedOpt && !isCorrectOpt) {
+                                        optStyle = 'bg-red-50 border-red-500 text-red-950 font-bold ring-1 ring-red-500';
+                                        optBadge = (
+                                          <span className="text-[10px] font-mono text-red-700 uppercase font-black ml-auto pl-2 flex items-center space-x-1">
+                                            <XCircle className="w-3 h-3 text-redhat-red" />
+                                            <span>Student Selected (Wrong)</span>
+                                          </span>
+                                        );
+                                      } else if (!isSelectedOpt && isCorrectOpt) {
+                                        optStyle = 'bg-emerald-50/40 border-dashed border-2 border-emerald-500 text-emerald-900 font-semibold';
+                                        optBadge = (
+                                          <span className="text-[10px] font-mono text-emerald-700 uppercase font-bold ml-auto pl-2 flex items-center space-x-1">
+                                            <CheckCircle className="w-3 h-3 text-emerald-600" />
+                                            <span>Correct Answer</span>
+                                          </span>
+                                        );
+                                      }
+
+                                      return (
+                                        <div
+                                          key={oIdx}
+                                          className={`p-2.5 rounded-xs border flex items-center justify-between ${optStyle}`}
+                                        >
+                                          <div className="flex items-center space-x-2">
+                                            <span className="font-mono font-bold text-neutral-400 text-[11px] shrink-0">
+                                              {String.fromCharCode(65 + oIdx)}.
+                                            </span>
+                                            <span className="leading-snug">{opt}</span>
+                                          </div>
+                                          {optBadge}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <div className="bg-neutral-50 p-3 rounded-xs border border-neutral-200 space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-neutral-500 font-bold uppercase text-[10px]">Student's Answer:</span>
+                                      <span className={`font-mono font-bold ${item.isCorrect ? 'text-emerald-700' : 'text-redhat-red'}`}>
+                                        {item.studentAns || '(No Answer)'}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center justify-between border-t border-neutral-200 pt-1.5">
+                                      <span className="text-neutral-500 font-bold uppercase text-[10px]">Correct Answer:</span>
+                                      <span className="font-mono font-bold text-emerald-800">
+                                        {String(q.correct_answer)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ======================================================== */}
+                  {/* MODAL TAB 2: ANTI-CHEATING VIOLATION TIMELINE            */}
+                  {/* ======================================================== */}
+                  {modalTab === 'timeline' && (
+                    <div className="space-y-4 animate-in fade-in-50 duration-150">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-redhat-black flex items-center space-x-1.5">
+                          <ShieldAlert className="w-3.5 h-3.5 text-redhat-red" />
+                          <span>Chronological Incident Timeline ({auditDetails.violations.length} logged)</span>
+                        </h4>
+                      </div>
+
+                      {auditDetails.violations.length === 0 ? (
+                        <div className="p-6 bg-white border border-emerald-200 rounded-sm text-center">
+                          <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
+                          <h5 className="font-bold text-emerald-900 text-sm">100% Clean Session</h5>
+                          <p className="text-neutral-500 text-xs mt-1">
+                            No integrity strikes, tab switches, or screenshot shortcuts were recorded for this candidate.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="border border-redhat-gray-border rounded-xs divide-y divide-neutral-200 bg-white">
+                          {auditDetails.violations.map((v, i) => (
+                            <div key={i} className="p-3 flex items-center justify-between hover:bg-neutral-50">
+                              <div>
+                                <span className="font-bold text-redhat-red font-mono mr-2 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-2xs text-[11px]">
+                                  [{v.type}]
+                                </span>
+                                <span className="text-neutral-800 font-medium">
+                                  {v.meta?.action || v.meta?.reason || v.meta?.key || 'Security incident recorded'}
+                                </span>
+                              </div>
+                              <span className="text-neutral-500 font-mono text-[11px] shrink-0 pl-3">
+                                {formatDateTimeIST(v.timestamp)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ======================================================== */}
+                  {/* MODAL TAB 3: PROCTOR WEBCAM SNAPSHOTS                    */}
+                  {/* ======================================================== */}
+                  {modalTab === 'snapshots' && (
+                    <div className="space-y-4 animate-in fade-in-50 duration-150">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-redhat-black flex items-center space-x-1.5">
+                          <Camera className="w-3.5 h-3.5 text-neutral-700" />
+                          <span>Webcam Captures ({auditDetails.snapshots.length} available)</span>
+                        </h4>
+                      </div>
+
+                      {auditDetails.snapshots.length === 0 ? (
+                        <div className="p-6 bg-white border border-neutral-200 rounded-sm text-center text-neutral-500">
+                          <Camera className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
+                          <p className="text-xs">No webcam snapshots recorded (camera authentication was disabled).</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {auditDetails.snapshots.map((snap, i) => (
+                            <div key={i} className="border border-neutral-300 rounded-xs overflow-hidden bg-black text-center shadow-2xs">
+                              <img
+                                src={snap.image_url}
+                                alt={`Capture ${i + 1}`}
+                                className="w-full h-24 object-cover"
+                              />
+                              <div className="text-[10px] text-white p-1 bg-neutral-900 font-mono">
+                                {formatTimeOnlyIST(snap.timestamp)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : null}
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-redhat-gray-light border-t border-redhat-gray-border flex justify-end">
+            <div className="p-4 bg-redhat-gray-light border-t border-redhat-gray-border flex items-center justify-between">
+              <span className="text-[11px] text-neutral-500 font-mono">
+                Candidate ID: {auditDetails?.submission.id}
+              </span>
               <button
                 onClick={() => {
                   setSelectedSubId(null);
                   setAuditDetails(null);
                 }}
-                className="px-4 py-2 bg-redhat-black text-white text-xs font-bold uppercase rounded-sm cursor-pointer"
+                className="px-5 py-2 bg-redhat-black hover:bg-neutral-800 text-white text-xs font-bold uppercase rounded-sm cursor-pointer shadow-xs"
               >
-                Close Audit
+                Close Report
               </button>
             </div>
           </div>

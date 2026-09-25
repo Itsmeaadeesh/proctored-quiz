@@ -89,7 +89,7 @@ router.get('/export-leaderboard-csv', async (_req: Request, res: Response) => {
         return (a.violations_count || 0) - (b.violations_count || 0);
       });
 
-    let csv = 'Rank,Roll Number,Student Name,College Email,Phone Number,Score,Total Marks,Percentage,Time Taken,Violations Count,Status,Disqualified,Submitted At\n';
+    let csv = 'Rank,Roll Number,Student Name,College Email,Phone Number,Score,Total Marks,Percentage,Time Taken,Started At,Submitted At,Violations Count,Status,Disqualified\n';
     ranked.forEach((s, idx) => {
       const mins = Math.floor((s.time_taken_seconds || 0) / 60);
       const secs = (s.time_taken_seconds || 0) % 60;
@@ -107,10 +107,11 @@ router.get('/export-leaderboard-csv', async (_req: Request, res: Response) => {
         s.total_marks,
         pct,
         `"${timeStr}"`,
+        `"${s.created_at || ''}"`,
+        `"${s.submitted_at || s.created_at || ''}"`,
         s.violations_count || 0,
         `"${statusStr}"`,
         s.disqualified ? 'YES' : 'NO',
-        `"${s.submitted_at || s.created_at}"`,
       ].join(',');
       csv += row + '\n';
     });
@@ -157,7 +158,7 @@ router.get('/export-csv', async (_req: Request, res: Response) => {
 
     // Generate CSV Header
     let csv =
-      'Roll Number,Student Name,College Email,Phone Number,Score,Total Marks,Percentage,Violations Count,Status,Time Spent (Seconds),Disqualified,Submitted At\n';
+      'Roll Number,Student Name,College Email,Phone Number,Score,Total Marks,Percentage,Violations Count,Status,Time Spent (Seconds),Started At,Submitted At,Disqualified\n';
 
     submissions.forEach((s) => {
       const percentage =
@@ -184,8 +185,9 @@ router.get('/export-csv', async (_req: Request, res: Response) => {
         s.violations_count || 0,
         `"${displayStatus}"`,
         s.time_taken_seconds || 0,
+        `"${s.created_at || ''}"`,
+        `"${s.submitted_at || s.created_at || ''}"`,
         s.disqualified ? 'YES' : 'NO',
-        `"${s.submitted_at || s.created_at}"`,
       ].join(',');
       csv += row + '\n';
     });
