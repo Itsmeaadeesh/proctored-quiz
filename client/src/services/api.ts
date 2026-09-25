@@ -214,4 +214,20 @@ export const api = {
         : '';
     return `${BASE_URL}/admin/export-csv?passcode=${encodeURIComponent(passcode)}`;
   },
+
+  async getAdminLeaderboard(): Promise<(Submission & { rank: number })[]> {
+    const res = await fetch(`${BASE_URL}/admin/leaderboard`, {
+      headers: api.getAdminHeaders(),
+    });
+    if (!res.ok) throw new Error('Could not fetch leaderboard');
+    return res.json();
+  },
+
+  getExportLeaderboardCsvUrl(): string {
+    const passcode =
+      typeof window !== 'undefined'
+        ? sessionStorage.getItem('rha_admin_passcode') || ''
+        : '';
+    return `${BASE_URL}/admin/export-leaderboard-csv?passcode=${encodeURIComponent(passcode)}`;
+  },
 };

@@ -35,6 +35,95 @@ router.get('/submissions', async (_req: Request, res: Response) => {
   }
 });
 
+// 2b. Official Ranked Leaderboard
+router.get('/leaderboard', async (_req: Request, res: Response) => {
+  try {
+    const submissions = await store.getAllSubmissions();
+
+    // Tie-breaker ranking logic:
+    // 1. Non-disqualified candidates ranked above disqualified
+    // 2. Completed / Auto-submitted ranked above Incomplete
+    // 3. Highest Score descending
+    // 4. Shortest Time Taken ascending (faster completion wins)
+    // 5. Fewest Violations ascending
+    const ranked = submissions
+      .filter((s) => s.status !== 'in_progress')
+      .sort((a, b) => {
+        if (a.disqualified !== b.disqualified) return a.disqualified ? 1 : -1;
+        const aInc = a.status === 'incomplete';
+        const bInc = b.status === 'incomplete';
+        if (aInc !== bInc) return aInc ? 1 : -1;
+        if (b.score !== a.score) return b.score - a.score;
+        const aTime = a.time_taken_seconds || 3600;
+        const bTime = b.time_taken_seconds || 3600;
+        if (aTime !== bTime) return aTime - bTime;
+        return (a.violations_count || 0) - (b.violations_count || 0);
+      })
+      .map((s, idx) => ({
+        rank: idx + 1,
+        ...s,
+      }));
+
+    return res.json(ranked);
+  } catch (err: any) {
+    console.error('Error fetching leaderboard:', err);
+    return res.status(500).json({ error: 'Could not fetch leaderboard.' });
+  }
+});
+
+// 2c. Export Official Leaderboard CSV
+router.get('/export-leaderboard-csv', async (_req: Request, res: Response) => {
+  try {
+    const submissions = await store.getAllSubmissions();
+    const ranked = submissions
+      .filter((s) => s.status !== 'in_progress')
+      .sort((a, b) => {
+        if (a.disqualified !== b.disqualified) return a.disqualified ? 1 : -1;
+        const aInc = a.status === 'incomplete';
+        const bInc = b.status === 'incomplete';
+        if (aInc !== bInc) return aInc ? 1 : -1;
+        if (b.score !== a.score) return b.score - a.score;
+        const aTime = a.time_taken_seconds || 3600;
+        const bTime = b.time_taken_seconds || 3600;
+        if (aTime !== bTime) return aTime - bTime;
+        return (a.violations_count || 0) - (b.violations_count || 0);
+      });
+
+    let csv = 'Rank,Roll Number,Student Name,College Email,Phone Number,Score,Total Marks,Percentage,Time Taken,Violations Count,Status,Disqualified,Submitted At\n';
+    ranked.forEach((s, idx) => {
+      const mins = Math.floor((s.time_taken_seconds || 0) / 60);
+      const secs = (s.time_taken_seconds || 0) % 60;
+      const timeStr = `${mins}m ${secs}s`;
+      const pct = s.total_marks > 0 ? ((s.score / s.total_marks) * 100).toFixed(1) + '%' : '0%';
+      let statusStr = s.disqualified ? 'Disqualified' : s.status === 'auto_submitted' ? 'Auto-submitted' : s.status === 'incomplete' ? 'Incomplete' : 'Completed';
+
+      const row = [
+        idx + 1,
+        `"${s.student_roll_no || ''}"`,
+        `"${s.student_name || ''}"`,
+        `"${s.student_email || ''}"`,
+        `"${s.student_phone || ''}"`,
+        s.score,
+        s.total_marks,
+        pct,
+        `"${timeStr}"`,
+        s.violations_count || 0,
+        `"${statusStr}"`,
+        s.disqualified ? 'YES' : 'NO',
+        `"${s.submitted_at || s.created_at}"`,
+      ].join(',');
+      csv += row + '\n';
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="RHA_DAY_26_Official_Leaderboard.csv"');
+    return res.send(csv);
+  } catch (err: any) {
+    console.error('Error generating leaderboard CSV:', err);
+    return res.status(500).json({ error: 'Could not generate leaderboard CSV.' });
+  }
+});
+
 // 3. Single Student Detailed Audit & Timeline
 router.get('/submissions/:submissionId/details', async (req: Request, res: Response) => {
   try {
