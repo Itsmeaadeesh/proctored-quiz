@@ -29,7 +29,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
 
     try {
       const data = await api.loginAdmin(passcode.trim());
-      loginAdmin(data.user);
+      loginAdmin(data.user, passcode.trim());
       onSuccess();
     } catch (err: any) {
       setErrorMsg(err.message || 'Invalid coordinator passcode.');

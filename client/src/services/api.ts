@@ -129,15 +129,30 @@ export const api = {
     return res.json();
   },
 
+  getAdminHeaders(): HeadersInit {
+    const passcode =
+      typeof window !== 'undefined'
+        ? sessionStorage.getItem('rha_admin_passcode') || ''
+        : '';
+    return {
+      'Content-Type': 'application/json',
+      'x-admin-passcode': passcode,
+    };
+  },
+
   // Admin
   async getAdminMetrics(): Promise<AdminMetrics> {
-    const res = await fetch(`${BASE_URL}/admin/metrics`);
+    const res = await fetch(`${BASE_URL}/admin/metrics`, {
+      headers: api.getAdminHeaders(),
+    });
     if (!res.ok) throw new Error('Could not fetch metrics');
     return res.json();
   },
 
   async getAdminSubmissions(): Promise<Submission[]> {
-    const res = await fetch(`${BASE_URL}/admin/submissions`);
+    const res = await fetch(`${BASE_URL}/admin/submissions`, {
+      headers: api.getAdminHeaders(),
+    });
     if (!res.ok) throw new Error('Could not fetch submissions');
     return res.json();
   },
@@ -148,7 +163,9 @@ export const api = {
     snapshots: ProctorSnapshot[];
     questions: Question[];
   }> {
-    const res = await fetch(`${BASE_URL}/admin/submissions/${submissionId}/details`);
+    const res = await fetch(`${BASE_URL}/admin/submissions/${submissionId}/details`, {
+      headers: api.getAdminHeaders(),
+    });
     if (!res.ok) throw new Error('Could not fetch submission audit details');
     return res.json();
   },
@@ -164,7 +181,7 @@ export const api = {
   ): Promise<{ success: boolean; quiz: Quiz }> {
     const res = await fetch(`${BASE_URL}/admin/quiz/${quizId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: api.getAdminHeaders(),
       body: JSON.stringify(settings),
     });
     if (!res.ok) throw new Error('Could not update quiz settings');
@@ -172,6 +189,10 @@ export const api = {
   },
 
   getExportCsvUrl(): string {
-    return `${BASE_URL}/admin/export-csv`;
+    const passcode =
+      typeof window !== 'undefined'
+        ? sessionStorage.getItem('rha_admin_passcode') || ''
+        : '';
+    return `${BASE_URL}/admin/export-csv?passcode=${encodeURIComponent(passcode)}`;
   },
 };

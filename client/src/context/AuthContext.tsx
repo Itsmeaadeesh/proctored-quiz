@@ -7,7 +7,7 @@ interface AuthContextType {
   submissionId: string | null;
   setSubmissionId: (id: string | null) => void;
   loginStudent: (user: User, quizId: string) => void;
-  loginAdmin: (user: User) => void;
+  loginAdmin: (user: User, passcode: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -19,7 +19,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(() => {
     try {
       const saved = localStorage.getItem('rha_user');
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      // Clean up legacy admin from localStorage!
+      if (parsed?.role === 'admin') {
+        localStorage.removeItem('rha_user');
+        return null;
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -49,9 +56,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('rha_quiz_id', quizId);
   };
 
-  const loginAdmin = (userData: User) => {
+  const loginAdmin = (userData: User, passcode: string) => {
     setUser(userData);
-    localStorage.setItem('rha_user', JSON.stringify(userData));
+    sessionStorage.setItem('rha_admin_passcode', passcode);
+    // Explicitly purge admin from localStorage so main portal remains student-only
+    localStorage.removeItem('rha_user');
   };
 
   const logout = () => {
@@ -61,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('rha_user');
     localStorage.removeItem('rha_quiz_id');
     localStorage.removeItem('rha_submission_id');
+    sessionStorage.removeItem('rha_admin_passcode');
   };
 
   return (

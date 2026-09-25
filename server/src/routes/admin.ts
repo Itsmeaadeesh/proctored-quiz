@@ -3,6 +3,16 @@ import { store } from '../db/store';
 
 const router = Router();
 
+// Secure Admin Passcode Authentication Middleware
+router.use((req: Request, res: Response, next) => {
+  const passcode = (req.headers['x-admin-passcode'] as string) || (req.query.passcode as string);
+  const expected = process.env.ADMIN_PASSCODE || 'RHAGGITS1234@1234*#ZYX';
+  if (!passcode || passcode.trim() !== expected) {
+    return res.status(401).json({ error: 'Unauthorized: Valid coordinator passcode is required.' });
+  }
+  next();
+});
+
 // 1. Overview Metrics
 router.get('/metrics', async (_req: Request, res: Response) => {
   try {

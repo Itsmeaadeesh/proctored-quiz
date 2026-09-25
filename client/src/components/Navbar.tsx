@@ -65,32 +65,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                   Exam Room
                 </button>
               )}
-
-              {isAdmin && (
-                <button
-                  onClick={() => onNavigate && onNavigate('admin')}
-                  className={`py-2 text-sm font-semibold tracking-wide transition-colors relative ${
-                    currentTab === 'admin'
-                      ? 'text-redhat-black font-bold after:content-[""] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[3px] after:bg-redhat-red'
-                      : 'text-redhat-gray-dark hover:text-redhat-black'
-                  }`}
-                >
-                  Admin Console
-                </button>
-              )}
             </nav>
           )}
 
           {/* Right: User Status & GGITS Institutional Logo */}
           <div className="flex items-center space-x-4">
-            {/* Active User Chip */}
-            {user && (
+            {/* Active User Chip (Students only) */}
+            {user && !isAdmin && (
               <div className="flex items-center space-x-2 bg-redhat-gray-light px-3 py-1.5 rounded-sm border border-redhat-gray-border">
-                {isAdmin ? (
-                  <ShieldCheck className="w-4 h-4 text-redhat-red" />
-                ) : (
-                  <UserIcon className="w-4 h-4 text-redhat-gray-text" />
-                )}
+                <UserIcon className="w-4 h-4 text-redhat-gray-text" />
                 <div className="text-left leading-tight hidden sm:block">
                   <div className="text-xs font-bold text-redhat-black">{user.name}</div>
                   <div className="text-[10px] text-redhat-gray-text font-mono">
