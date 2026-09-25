@@ -97,6 +97,16 @@ export const QuizResultPage: React.FC<QuizResultPageProps> = ({
                   <XCircle className="w-4 h-4 shrink-0" />
                   <span>Disqualified</span>
                 </div>
+              ) : submission.status === 'auto_submitted' ? (
+                <div className="bg-orange-950 border border-orange-500 text-orange-400 px-3.5 py-1.5 rounded-xs font-mono font-bold text-xs uppercase tracking-wider flex items-center space-x-1.5">
+                  <Clock className="w-4 h-4 shrink-0" />
+                  <span>Auto-submitted (Timeout)</span>
+                </div>
+              ) : submission.status === 'incomplete' ? (
+                <div className="bg-amber-950 border border-amber-500 text-amber-400 px-3.5 py-1.5 rounded-xs font-mono font-bold text-xs uppercase tracking-wider flex items-center space-x-1.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Incomplete (Window Closed)</span>
+                </div>
               ) : (
                 <div className="bg-emerald-950 border border-emerald-500 text-emerald-400 px-3.5 py-1.5 rounded-xs font-mono font-bold text-xs uppercase tracking-wider flex items-center space-x-1.5">
                   <CheckCircle className="w-4 h-4 shrink-0" />

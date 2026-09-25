@@ -27,10 +27,10 @@ CREATE TABLE IF NOT EXISTS public.quizzes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,
-    duration_minutes INT NOT NULL DEFAULT 15,
+    duration_minutes INT NOT NULL DEFAULT 60,
     max_violations INT NOT NULL DEFAULT 3,
     shuffle_questions BOOLEAN NOT NULL DEFAULT true,
-    allow_backtracking BOOLEAN NOT NULL DEFAULT true,
+    allow_backtracking BOOLEAN NOT NULL DEFAULT false,
     start_time TIMESTAMPTZ,
     end_time TIMESTAMPTZ,
     is_active BOOLEAN NOT NULL DEFAULT true,
@@ -64,12 +64,13 @@ CREATE TABLE IF NOT EXISTS public.submissions (
     answers JSONB NOT NULL DEFAULT '{}'::jsonb, -- Map: { [question_id]: selectedOption | answerText }
     score NUMERIC NOT NULL DEFAULT 0,
     total_marks NUMERIC NOT NULL DEFAULT 0,
-    status TEXT NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'submitted', 'disqualified', 'flagged_for_review')),
+    status TEXT NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'submitted', 'disqualified', 'flagged_for_review', 'auto_submitted', 'incomplete')),
     disqualified BOOLEAN NOT NULL DEFAULT false,
     disqualification_reason TEXT,
     time_taken_seconds INT DEFAULT 0,
     submitted_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT unique_quiz_user UNIQUE (quiz_id, user_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_submissions_quiz_user ON public.submissions(quiz_id, user_id);

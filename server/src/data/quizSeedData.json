@@ -1,0 +1,660 @@
+{
+  "quiz_title": "RHA DAY 26 Quiz",
+  "duration_minutes": 60,
+  "questions": [
+    {
+      "text": "What does \"Red Hat\" refer to in the tech industry?",
+      "options": [
+        "A company",
+        "A programming language",
+        "A hat brand",
+        "A search engine"
+      ],
+      "correct_answer": "A company",
+      "marks": 1
+    },
+    {
+      "text": "What is Red Hat best known for?",
+      "options": [
+        "Making phones",
+        "Open source software & Linux",
+        "Making video games",
+        "Social media"
+      ],
+      "correct_answer": "Open source software & Linux",
+      "marks": 1
+    },
+    {
+      "text": "Who is the current CEO of Red Hat?",
+      "options": [
+        "Matt Hicks",
+        "Bob Young",
+        "Marc Ewing",
+        "Elon Musk"
+      ],
+      "correct_answer": "Matt Hicks",
+      "marks": 1
+    },
+    {
+      "text": "What was Red Hat's old corporate mascot/logo called?",
+      "options": [
+        "Shadowman",
+        "Tux",
+        "Redman",
+        "Pingu"
+      ],
+      "correct_answer": "Shadowman",
+      "marks": 1
+    },
+    {
+      "text": "Who are the two founders of Red Hat?",
+      "options": [
+        "Bob Young and Marc Ewing",
+        "Bill Gates and Steve Jobs",
+        "Larry Page and Sergey Brin",
+        "Linus Torvalds and Dennis Ritchie"
+      ],
+      "correct_answer": "Bob Young and Marc Ewing",
+      "marks": 1
+    },
+    {
+      "text": "In what year was Red Hat founded?",
+      "options": [
+        "1993",
+        "1999",
+        "2001",
+        "1985"
+      ],
+      "correct_answer": "1993",
+      "marks": 1
+    },
+    {
+      "text": "Where is Red Hat's headquarters located?",
+      "options": [
+        "Raleigh, North Carolina",
+        "New York",
+        "San Francisco",
+        "Austin"
+      ],
+      "correct_answer": "Raleigh, North Carolina",
+      "marks": 1
+    },
+    {
+      "text": "In what year did Red Hat go public (IPO)?",
+      "options": [
+        "1999",
+        "1993",
+        "2003",
+        "2010"
+      ],
+      "correct_answer": "1999",
+      "marks": 1
+    },
+    {
+      "text": "Red Hat's IPO achieved what milestone?",
+      "options": [
+        "8th biggest first-day gain in Wall Street history",
+        "Biggest loss ever",
+        "First tech IPO ever",
+        "Nothing notable"
+      ],
+      "correct_answer": "8th biggest first-day gain in Wall Street history",
+      "marks": 1
+    },
+    {
+      "text": "What percentage of Fortune 500 companies use Red Hat?",
+      "options": [
+        "90%",
+        "50%",
+        "25%",
+        "10%"
+      ],
+      "correct_answer": "90%",
+      "marks": 1
+    },
+    {
+      "text": "What is the official mascot of the Linux kernel?",
+      "options": [
+        "Penguin (Tux)",
+        "Lion",
+        "Dog",
+        "Fox"
+      ],
+      "correct_answer": "Penguin (Tux)",
+      "marks": 1
+    },
+    {
+      "text": "What is the name of the Linux penguin mascot?",
+      "options": [
+        "Tux",
+        "Rex",
+        "Max",
+        "Leo"
+      ],
+      "correct_answer": "Tux",
+      "marks": 1
+    },
+    {
+      "text": "Marc Ewing wore what item that inspired the company name \"Red Hat\"?",
+      "options": [
+        "His grandfather's red lacrosse cap",
+        "A cowboy hat",
+        "A baseball cap",
+        "A chef's hat"
+      ],
+      "correct_answer": "His grandfather's red lacrosse cap",
+      "marks": 1
+    },
+    {
+      "text": "What term describes software whose source code is publicly available and modifiable?",
+      "options": [
+        "Open Source",
+        "Freeware",
+        "Shareware",
+        "Closed Source"
+      ],
+      "correct_answer": "Open Source",
+      "marks": 1
+    },
+    {
+      "text": "Can open source software be used for commercial purposes?",
+      "options": [
+        "Yes",
+        "No",
+        "Only for students",
+        "Only in the US"
+      ],
+      "correct_answer": "Yes",
+      "marks": 1
+    },
+    {
+      "text": "Is Microsoft Office an open source software?",
+      "options": [
+        "No",
+        "Yes",
+        "Partially",
+        "Not sure"
+      ],
+      "correct_answer": "No",
+      "marks": 1
+    },
+    {
+      "text": "What must users agree to when using open source software?",
+      "options": [
+        "License terms",
+        "Nothing",
+        "Payment plan",
+        "Subscription"
+      ],
+      "correct_answer": "License terms",
+      "marks": 1
+    },
+    {
+      "text": "What is \"Copyleft\"?",
+      "options": [
+        "A concept protecting users' rights (opposite of copyright)",
+        "A type of virus",
+        "A hardware component",
+        "A file format"
+      ],
+      "correct_answer": "A concept protecting users' rights (opposite of copyright)",
+      "marks": 1
+    },
+    {
+      "text": "PNG is a type of what?",
+      "options": [
+        "Image format",
+        "Audio format",
+        "Programming language",
+        "Operating system"
+      ],
+      "correct_answer": "Image format",
+      "marks": 1
+    },
+    {
+      "text": "What does RHEL stand for?",
+      "options": [
+        "Red Hat Enterprise Linux",
+        "Red Hat Enterprise Language",
+        "Red Hat Easy Linux",
+        "Red Hat Extended License"
+      ],
+      "correct_answer": "Red Hat Enterprise Linux",
+      "marks": 1
+    },
+    {
+      "text": "RHEL's community-supported counterpart is called:",
+      "options": [
+        "Fedora",
+        "Ubuntu",
+        "Debian",
+        "CentOS"
+      ],
+      "correct_answer": "Fedora",
+      "marks": 1
+    },
+    {
+      "text": "What is JBoss Middleware used for?",
+      "options": [
+        "Building, integrating, and automating enterprise applications",
+        "Gaming",
+        "Video editing",
+        "Social media management"
+      ],
+      "correct_answer": "Building, integrating, and automating enterprise applications",
+      "marks": 1
+    },
+    {
+      "text": "Which hypervisor does Red Hat Virtualization use?",
+      "options": [
+        "KVM",
+        "Hyper-V",
+        "VirtualBox",
+        "VMware"
+      ],
+      "correct_answer": "KVM",
+      "marks": 1
+    },
+    {
+      "text": "Which protocol does Red Hat Virtualization use for remote display?",
+      "options": [
+        "SPICE",
+        "HTTP",
+        "FTP",
+        "SSH"
+      ],
+      "correct_answer": "SPICE",
+      "marks": 1
+    },
+    {
+      "text": "What was Red Hat's cloud management solution called?",
+      "options": [
+        "Red Hat CloudForms",
+        "Red Hat Cloud X",
+        "OpenShift",
+        "Red Hat Sky"
+      ],
+      "correct_answer": "Red Hat CloudForms",
+      "marks": 1
+    },
+    {
+      "text": "What is Red Hat Storage based on?",
+      "options": [
+        "GlusterFS and RHEL",
+        "Windows Server",
+        "MySQL",
+        "Oracle DB"
+      ],
+      "correct_answer": "GlusterFS and RHEL",
+      "marks": 1
+    },
+    {
+      "text": "What does Red Hat Mobile Application Platform help with?",
+      "options": [
+        "Developing and deploying mobile apps",
+        "Playing mobile games",
+        "Streaming videos",
+        "Editing photos"
+      ],
+      "correct_answer": "Developing and deploying mobile apps",
+      "marks": 1
+    },
+    {
+      "text": "What is Ansible primarily used for?",
+      "options": [
+        "IT automation (cloud provisioning, config management, deployment)",
+        "Video calling",
+        "Word processing",
+        "Web browsing"
+      ],
+      "correct_answer": "IT automation (cloud provisioning, config management, deployment)",
+      "marks": 1
+    },
+    {
+      "text": "In what year did Red Hat acquire Ansible?",
+      "options": [
+        "2015",
+        "2010",
+        "2018",
+        "2020"
+      ],
+      "correct_answer": "2015",
+      "marks": 1
+    },
+    {
+      "text": "Which curriculum areas does the RHA (Red Hat Academy) program cover?",
+      "options": [
+        "Linux, Ansible, Middleware, Cloud, DevOps",
+        "Only Linux",
+        "Only Cloud",
+        "Web Design only"
+      ],
+      "correct_answer": "Linux, Ansible, Middleware, Cloud, DevOps",
+      "marks": 1
+    },
+    {
+      "text": "Is Red Hat Academy course content free for students?",
+      "options": [
+        "Yes",
+        "No",
+        "Only for 50% discount",
+        "Only for teachers"
+      ],
+      "correct_answer": "Yes",
+      "marks": 1
+    },
+    {
+      "text": "Which content delivery method is available through Red Hat Academy?",
+      "options": [
+        "HTML",
+        "PDF only",
+        "Video only",
+        "Print only"
+      ],
+      "correct_answer": "HTML",
+      "marks": 1
+    },
+    {
+      "text": "RHA students get what percentage discount on Red Hat certification exams?",
+      "options": [
+        "50%",
+        "25%",
+        "10%",
+        "75%"
+      ],
+      "correct_answer": "50%",
+      "marks": 1
+    },
+    {
+      "text": "RHA course content is available in how many global languages?",
+      "options": [
+        "12",
+        "5",
+        "1",
+        "20"
+      ],
+      "correct_answer": "12",
+      "marks": 1
+    },
+    {
+      "text": "How many Red Hat courses are part of the RHA program?",
+      "options": [
+        "12",
+        "6",
+        "20",
+        "3"
+      ],
+      "correct_answer": "12",
+      "marks": 1
+    },
+    {
+      "text": "How many certifications are offered through the RHA program?",
+      "options": [
+        "6",
+        "12",
+        "3",
+        "10"
+      ],
+      "correct_answer": "6",
+      "marks": 1
+    },
+    {
+      "text": "How many performance-based certification exams are available in RHA?",
+      "options": [
+        "5",
+        "10",
+        "2",
+        "12"
+      ],
+      "correct_answer": "5",
+      "marks": 1
+    },
+    {
+      "text": "Do RHA students get a course completion certificate after finishing each course?",
+      "options": [
+        "Yes",
+        "No",
+        "Only after all courses",
+        "Only for paid courses"
+      ],
+      "correct_answer": "Yes",
+      "marks": 1
+    },
+    {
+      "text": "What term is used for the kiosk laptop that hosts individual certification exams outside a testing facility?",
+      "options": [
+        "KoaLA",
+        "ExamBox",
+        "TestPod",
+        "CertKiosk"
+      ],
+      "correct_answer": "KoaLA",
+      "marks": 1
+    },
+    {
+      "text": "GIMPshop is an open source alternative to which software?",
+      "options": [
+        "Adobe Photoshop",
+        "MS Word",
+        "Excel",
+        "PowerPoint"
+      ],
+      "correct_answer": "Adobe Photoshop",
+      "marks": 1
+    },
+    {
+      "text": "Which open source software is used mainly for communication/chat?",
+      "options": [
+        "Pidgin",
+        "Photoshop",
+        "Excel",
+        "AutoCAD"
+      ],
+      "correct_answer": "Pidgin",
+      "marks": 1
+    },
+    {
+      "text": "Which operating system did Ken Thompson and Dennis Ritchie invent at Bell Labs in 1969?",
+      "options": [
+        "Unix",
+        "Windows",
+        "Linux",
+        "MacOS"
+      ],
+      "correct_answer": "Unix",
+      "marks": 1
+    },
+    {
+      "text": "What does LAMP stand for?",
+      "options": [
+        "Linux, Apache, MySQL, PHP",
+        "Linux, Android, MongoDB, Python",
+        "Linux, Apache, Mongo, Perl",
+        "Linux, AWS, MySQL, PHP"
+      ],
+      "correct_answer": "Linux, Apache, MySQL, PHP",
+      "marks": 1
+    },
+    {
+      "text": "In LAMP, what does the \"L\" stand for?",
+      "options": [
+        "Linux",
+        "Laravel",
+        "Local",
+        "Lite"
+      ],
+      "correct_answer": "Linux",
+      "marks": 1
+    },
+    {
+      "text": "In LAMP, what does the \"A\" stand for?",
+      "options": [
+        "Apache",
+        "Android",
+        "Azure",
+        "AI"
+      ],
+      "correct_answer": "Apache",
+      "marks": 1
+    },
+    {
+      "text": "In LAMP, what does the \"M\" stand for?",
+      "options": [
+        "MySQL",
+        "Microsoft",
+        "Mongo",
+        "Media"
+      ],
+      "correct_answer": "MySQL",
+      "marks": 1
+    },
+    {
+      "text": "In LAMP, what does the \"P\" stand for?",
+      "options": [
+        "PHP",
+        "Python only",
+        "Postgres",
+        "Perl only"
+      ],
+      "correct_answer": "PHP",
+      "marks": 1
+    },
+    {
+      "text": "What is Quagga (an open source project) named after?",
+      "options": [
+        "A zebra",
+        "A lion",
+        "A snake",
+        "A bird"
+      ],
+      "correct_answer": "A zebra",
+      "marks": 1
+    },
+    {
+      "text": "Does Quagga have a striped front and plain brown back, like its namesake animal?",
+      "options": [
+        "True",
+        "False"
+      ],
+      "correct_answer": "True",
+      "marks": 1
+    },
+    {
+      "text": "What does \"Open Source\" mean in simple terms?",
+      "options": [
+        "Software whose code can be viewed and modified by anyone",
+        "Free antivirus software",
+        "A paid subscription model",
+        "A hardware brand"
+      ],
+      "correct_answer": "Software whose code can be viewed and modified by anyone",
+      "marks": 1
+    },
+    {
+      "text": "Which of these is an example of an open source operating system?",
+      "options": [
+        "Linux",
+        "Windows",
+        "macOS",
+        "iOS"
+      ],
+      "correct_answer": "Linux",
+      "marks": 1
+    },
+    {
+      "text": "Red Hat started because a technologist met a small businessman running what type of business?",
+      "options": [
+        "Mail-order computer supply catalog",
+        "A grocery store",
+        "A bookstore",
+        "A car dealership"
+      ],
+      "correct_answer": "Mail-order computer supply catalog",
+      "marks": 1
+    },
+    {
+      "text": "What was the technologist (co-founder) doing before starting Red Hat?",
+      "options": [
+        "Hacking, debugging, and spinning Linux distributions on CDs",
+        "Selling hardware",
+        "Teaching school",
+        "Running a bank"
+      ],
+      "correct_answer": "Hacking, debugging, and spinning Linux distributions on CDs",
+      "marks": 1
+    },
+    {
+      "text": "What does \"distribution\" mean in the context of Linux (like \"spinning his own distribution\")?",
+      "options": [
+        "A packaged version of the Linux operating system",
+        "A delivery truck",
+        "A software license",
+        "A hardware component"
+      ],
+      "correct_answer": "A packaged version of the Linux operating system",
+      "marks": 1
+    },
+    {
+      "text": "Which of these is a real Red Hat product/platform?",
+      "options": [
+        "OpenShift/RHEL",
+        "WinOS",
+        "MacServer",
+        "AppleCloud"
+      ],
+      "correct_answer": "OpenShift/RHEL",
+      "marks": 1
+    },
+    {
+      "text": "True or False: Open source software can never be used by companies for profit.",
+      "options": [
+        "False",
+        "True"
+      ],
+      "correct_answer": "False",
+      "marks": 1
+    },
+    {
+      "text": "True or False: Red Hat is a company that only makes hardware.",
+      "options": [
+        "False",
+        "True"
+      ],
+      "correct_answer": "False",
+      "marks": 1
+    },
+    {
+      "text": "What is the main benefit of open source software for developers?",
+      "options": [
+        "They can view, modify, and improve the code",
+        "It's always the fastest software",
+        "It requires no internet",
+        "It's only for governments"
+      ],
+      "correct_answer": "They can view, modify, and improve the code",
+      "marks": 1
+    },
+    {
+      "text": "Which of these best describes DevOps (as included in RHA curriculum)?",
+      "options": [
+        "A practice combining development and operations for faster software delivery",
+        "A programming language",
+        "A type of hardware",
+        "A database system"
+      ],
+      "correct_answer": "A practice combining development and operations for faster software delivery",
+      "marks": 1
+    },
+    {
+      "text": "Which of the following is NOT an open source software mentioned in this material?",
+      "options": [
+        "Microsoft Office",
+        "GIMPshop",
+        "Pidgin",
+        "Linux"
+      ],
+      "correct_answer": "Microsoft Office",
+      "marks": 1
+    }
+  ]
+}

@@ -63,7 +63,12 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, userName, userRollNo, userEmail, userPhone }),
     });
-    if (!res.ok) throw new Error('Could not start quiz session');
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({ error: 'Could not start quiz session' }));
+      const error: any = new Error(errData.error || 'Could not start quiz session');
+      error.data = errData;
+      throw error;
+    }
     return res.json();
   },
 
@@ -107,7 +112,8 @@ export const api = {
   async submitQuiz(
     submissionId: string,
     answers: Record<string, string | string[]>,
-    timeSpentSeconds: number
+    timeSpentSeconds: number,
+    status?: 'submitted' | 'auto_submitted' | 'incomplete'
   ): Promise<{
     success: boolean;
     submission: Submission;
@@ -117,7 +123,7 @@ export const api = {
     const res = await fetch(`${BASE_URL}/submissions/${submissionId}/submit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ answers, timeSpentSeconds }),
+      body: JSON.stringify({ answers, timeSpentSeconds, status }),
     });
     if (!res.ok) throw new Error('Failed to submit quiz');
     return res.json();

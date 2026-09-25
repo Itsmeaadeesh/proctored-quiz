@@ -7,7 +7,7 @@ const router = Router();
 router.post('/:submissionId/submit', async (req: Request, res: Response) => {
   try {
     const { submissionId } = req.params;
-    const { answers, timeSpentSeconds } = req.body;
+    const { answers, timeSpentSeconds, status } = req.body;
 
     if (!answers || typeof answers !== 'object') {
       return res.status(400).json({ error: 'Answers payload is required.' });
@@ -16,7 +16,8 @@ router.post('/:submissionId/submit', async (req: Request, res: Response) => {
     const updated = await store.submitAnswers(
       submissionId,
       answers,
-      timeSpentSeconds || 0
+      timeSpentSeconds || 0,
+      status
     );
 
     if (!updated) {

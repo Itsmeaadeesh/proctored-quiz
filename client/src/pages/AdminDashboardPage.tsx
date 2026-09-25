@@ -27,7 +27,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'submitted' | 'disqualified'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'submitted' | 'auto_submitted' | 'incomplete' | 'disqualified'>('all');
   const [isLoading, setIsLoading] = useState(true);
 
   // Selected student audit modal
@@ -114,7 +114,13 @@ export const AdminDashboardPage: React.FC = () => {
         ? true
         : statusFilter === 'disqualified'
         ? s.disqualified
-        : s.status === 'submitted' && !s.disqualified;
+        : statusFilter === 'submitted'
+        ? s.status === 'submitted' && !s.disqualified
+        : statusFilter === 'auto_submitted'
+        ? s.status === 'auto_submitted'
+        : statusFilter === 'incomplete'
+        ? s.status === 'incomplete'
+        : true;
     return matchSearch && matchFilter;
   });
 
@@ -178,10 +184,10 @@ export const AdminDashboardPage: React.FC = () => {
               <Award className="w-4 h-4 text-redhat-black" />
             </div>
             <div className="text-3xl font-black font-mono text-redhat-black mt-2">
-              {metrics.avgScore} <span className="text-sm text-neutral-400">marks</span>
+              {metrics.avgScore} <span className="text-sm text-neutral-400">/ 60 marks</span>
             </div>
             <div className="text-[11px] text-neutral-500 mt-1">
-              Active Question Bank: 10 items
+              Active Question Bank: 60 items (60 Marks)
             </div>
           </div>
 
@@ -239,6 +245,8 @@ export const AdminDashboardPage: React.FC = () => {
           >
             <option value="all">All Candidates</option>
             <option value="submitted">Completed Only</option>
+            <option value="auto_submitted">Auto-submitted Only</option>
+            <option value="incomplete">Incomplete Only</option>
             <option value="disqualified">Disqualified Only</option>
           </select>
         </div>
@@ -306,12 +314,20 @@ export const AdminDashboardPage: React.FC = () => {
                         <span className="inline-block bg-red-900 text-white font-mono text-[10px] px-2 py-0.5 rounded-xs uppercase font-bold">
                           Disqualified
                         </span>
+                      ) : sub.status === 'auto_submitted' ? (
+                        <span className="inline-block bg-orange-600 text-white font-mono text-[10px] px-2 py-0.5 rounded-xs uppercase font-bold">
+                          Auto-submitted
+                        </span>
+                      ) : sub.status === 'incomplete' ? (
+                        <span className="inline-block bg-amber-600 text-white font-mono text-[10px] px-2 py-0.5 rounded-xs uppercase font-bold">
+                          Incomplete
+                        </span>
                       ) : sub.status === 'submitted' ? (
-                        <span className="inline-block bg-neutral-200 text-neutral-800 font-mono text-[10px] px-2 py-0.5 rounded-xs uppercase font-bold">
-                          Submitted
+                        <span className="inline-block bg-emerald-700 text-white font-mono text-[10px] px-2 py-0.5 rounded-xs uppercase font-bold">
+                          Completed
                         </span>
                       ) : (
-                        <span className="inline-block bg-amber-100 text-amber-800 font-mono text-[10px] px-2 py-0.5 rounded-xs uppercase font-bold">
+                        <span className="inline-block bg-neutral-200 text-neutral-800 font-mono text-[10px] px-2 py-0.5 rounded-xs uppercase font-bold">
                           In Progress
                         </span>
                       )}

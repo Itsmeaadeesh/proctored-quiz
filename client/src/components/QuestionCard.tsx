@@ -10,6 +10,7 @@ interface QuestionCardProps {
   onSelectAnswer: (answer: string | string[]) => void;
   isFlagged: boolean;
   onToggleFlag: () => void;
+  allowBacktracking?: boolean;
 }
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({
@@ -20,6 +21,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   onSelectAnswer,
   isFlagged,
   onToggleFlag,
+  allowBacktracking = true,
 }) => {
   const isMultiple = question.type === 'mcq_multiple';
   const isShortAnswer = question.type === 'short_answer';
@@ -50,7 +52,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       {/* Question Header & Meta */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-redhat-gray-border">
         
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="bg-redhat-black text-white font-mono font-bold text-xs px-2.5 py-1 rounded-xs uppercase tracking-wider">
             Q {currentIndex + 1} of {totalQuestions}
           </span>
@@ -64,6 +66,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               ? 'Multi-Choice'
               : 'Single Choice'}
           </span>
+          {!allowBacktracking && (
+            <span className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-xs">
+              🔒 Backtracking Locked
+            </span>
+          )}
         </div>
 
         {/* Flag for Review Button (Red-outlined per branding) */}

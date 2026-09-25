@@ -47,7 +47,13 @@ export interface Quiz {
   created_at: string;
 }
 
-export type SubmissionStatus = 'in_progress' | 'submitted' | 'disqualified' | 'flagged_for_review';
+export type SubmissionStatus =
+  | 'in_progress'
+  | 'submitted'
+  | 'disqualified'
+  | 'flagged_for_review'
+  | 'auto_submitted'
+  | 'incomplete';
 
 export interface Submission {
   id: string;

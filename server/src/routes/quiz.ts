@@ -4,11 +4,30 @@ import { SanitizedQuestion } from '../types';
 
 const router = Router();
 
-// Helper to shuffle array (Fisher-Yates)
-function shuffleArray<T>(array: T[]): T[] {
+// Deterministic 32-bit PRNG (Mulberry32) for reproducible per-student randomization
+function mulberry32(seed: number) {
+  let s = seed;
+  return function () {
+    s |= 0;
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function stringToSeed(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+  }
+  return hash;
+}
+
+function seededShuffle<T>(array: T[], rng: () => number): T[] {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
@@ -46,9 +65,6 @@ router.post('/:quizId/start', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Quiz not found.' });
     }
 
-    // Find student in memory/db
-    const user = (await store.getAllSubmissions()).find((s) => s.user_id === userId);
-    // Or fetch through store
     const studentUser = {
       id: userId,
       name: req.body.userName || 'Student',
@@ -65,14 +81,20 @@ router.post('/:quizId/start', async (req: Request, res: Response) => {
     let questions = (await store.getQuestions(quizId, true)) as SanitizedQuestion[];
 
     if (quiz.shuffle_questions) {
-      // Shuffle questions
-      questions = shuffleArray(questions);
-      // Shuffle options for MCQ questions
+      // Seed based on submission id and user id: unique per student, consistent on refresh
+      const studentSeed = stringToSeed(`${submission.id}_${submission.user_id}`);
+      const rng = mulberry32(studentSeed);
+
+      // Randomize question order per student
+      questions = seededShuffle(questions, rng);
+
+      // Randomize option order per question per student
       questions = questions.map((q) => {
         if (q.options && q.options.length > 0) {
+          const qRng = mulberry32(stringToSeed(`${submission.id}_${q.id}`));
           return {
             ...q,
-            options: shuffleArray(q.options),
+            options: seededShuffle(q.options, qRng),
           };
         }
         return q;
@@ -85,6 +107,14 @@ router.post('/:quizId/start', async (req: Request, res: Response) => {
       questions,
     });
   } catch (err: any) {
+    if (err.code === 'ATTEMPT_LIMIT_REACHED' || err.code === 'WINDOW_EXPIRED') {
+      return res.status(403).json({
+        error: err.message,
+        code: err.code,
+        submission: err.submission,
+        locked: true,
+      });
+    }
     console.error('Error starting quiz:', err);
     return res.status(500).json({ error: 'Failed to start quiz session.' });
   }

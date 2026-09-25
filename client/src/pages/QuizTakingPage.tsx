@@ -11,7 +11,7 @@ import { WatermarkOverlay } from '../components/WatermarkOverlay';
 import { FullscreenModal } from '../components/FullscreenModal';
 import { BlackoutOverlay } from '../components/BlackoutOverlay';
 import { WebcamProctor } from '../components/WebcamProctor';
-import { AlertCircle, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, ShieldAlert, CheckCircle2, Lock } from 'lucide-react';
 
 interface QuizTakingPageProps {
   onExamCompleted: (submissionId: string) => void;
@@ -25,6 +25,9 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
+  const [remainingSeconds, setRemainingSeconds] = useState<number | undefined>(undefined);
+  const [lockedMessage, setLockedMessage] = useState<string | null>(null);
+  const [lockedSubmissionId, setLockedSubmissionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -32,6 +35,26 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
   const [disqualificationReason, setDisqualificationReason] = useState('');
 
   const startTimeRef = useRef(Date.now());
+
+  // Handle Timeout Auto-submit
+  const handleTimeoutAutoSubmit = useCallback(
+    async (forcedSubId?: string) => {
+      const targetSubId = forcedSubId || submissionId;
+      if (!targetSubId || isSubmitting) return;
+      setIsSubmitting(true);
+
+      const maxSec = quiz ? (quiz.duration_minutes || 60) * 60 : 3600;
+
+      try {
+        await api.submitQuiz(targetSubId, answers, maxSec, 'auto_submitted');
+        onExamCompleted(targetSubId);
+      } catch (err) {
+        console.error('Timeout auto-submit error:', err);
+        onExamCompleted(targetSubId);
+      }
+    },
+    [submissionId, isSubmitting, quiz, answers, onExamCompleted]
+  );
 
   // Initialize or resume quiz session
   useEffect(() => {
@@ -49,17 +72,37 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
         if (data.submission.answers) {
           setAnswers(data.submission.answers);
         }
+
+        // Calculate continuous remaining time from session start
+        const elapsed = Math.floor(
+          (Date.now() - new Date(data.submission.created_at).getTime()) / 1000
+        );
+        const rem = Math.max(0, (data.quiz.duration_minutes || 60) * 60 - elapsed);
+        setRemainingSeconds(rem);
+
+        if (rem <= 0) {
+          handleTimeoutAutoSubmit(data.submission.id);
+        }
+
         setIsLoading(false);
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.error('Failed to start quiz session:', err);
+        if (err.data?.locked) {
+          setLockedMessage(
+            err.message || 'You have already attempted or completed this examination.'
+          );
+          if (err.data?.submission?.id) {
+            setLockedSubmissionId(err.data.submission.id);
+          }
+        }
         setIsLoading(false);
       });
 
     return () => {
       isMounted = false;
     };
-  }, [user, activeQuizId, setSubmissionId]);
+  }, [user, activeQuizId, setSubmissionId, handleTimeoutAutoSubmit]);
 
   // Handle Disqualification triggered by violation threshold
   const handleDisqualify = useCallback(
@@ -70,7 +113,7 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
       if (submissionId) {
         const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
         try {
-          await api.submitQuiz(submissionId, answers, timeSpent);
+          await api.submitQuiz(submissionId, answers, timeSpent, 'disqualified' as any);
         } catch (e) {
           console.error('Auto-submit under disqualification failed:', e);
         }
@@ -156,6 +199,41 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
     }
   };
 
+  if (lockedMessage) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6 bg-redhat-gray-light">
+        <div className="max-w-md w-full bg-white border-2 border-redhat-black rounded-sm p-8 shadow-2xl text-center">
+          <div className="w-16 h-16 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-black text-redhat-black font-display uppercase tracking-tight mb-2">
+            Examination Attempt Locked
+          </h2>
+          <p className="text-xs text-neutral-600 mb-6 leading-relaxed">
+            {lockedMessage}
+          </p>
+          {lockedSubmissionId ? (
+            <button
+              onClick={() => onExamCompleted(lockedSubmissionId)}
+              className="w-full py-3 px-4 bg-redhat-red hover:bg-redhat-red-dark text-white font-bold text-xs uppercase tracking-wider rounded-sm transition-colors cursor-pointer"
+            >
+              View Incident Certificate &amp; Result
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                window.location.href = '/';
+              }}
+              className="w-full py-3 px-4 bg-redhat-black hover:bg-neutral-800 text-white font-bold text-xs uppercase tracking-wider rounded-sm transition-colors cursor-pointer"
+            >
+              Return to Portal
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading || !quiz || questions.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 bg-redhat-gray-light">
@@ -230,8 +308,9 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
 
       {/* 5. Sticky Top Red Progress Bar / Timer */}
       <QuizTimer
-        durationMinutes={quiz.duration_minutes}
-        onTimeExpired={handleSubmitExam}
+        durationMinutes={quiz.duration_minutes || 60}
+        initialSecondsRemaining={remainingSeconds}
+        onTimeExpired={handleTimeoutAutoSubmit}
         isPaused={showFullscreenModal || isDisqualifiedModalOpen}
       />
 
@@ -257,6 +336,7 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
               onSelectAnswer={handleSelectAnswer}
               isFlagged={flaggedQuestions.has(currentIndex)}
               onToggleFlag={handleToggleFlag}
+              allowBacktracking={quiz.allow_backtracking}
             />
 
             {/* Quick Pagination footer below question */}

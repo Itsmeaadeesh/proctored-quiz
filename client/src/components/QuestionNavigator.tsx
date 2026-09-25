@@ -46,8 +46,8 @@ export const QuestionNavigator: React.FC<QuestionNavigatorProps> = ({
         </div>
       </div>
 
-      {/* Grid of Question Pills */}
-      <div className="grid grid-cols-5 gap-2 mb-6">
+      {/* Grid of Question Pills (60 questions responsive scrollable) */}
+      <div className="grid grid-cols-6 gap-1.5 max-h-72 overflow-y-auto pr-1 mb-6">
         {Array.from({ length: totalQuestions }, (_, idx) => {
           const qId = questionIds[idx];
           const hasAnswer =
@@ -56,24 +56,24 @@ export const QuestionNavigator: React.FC<QuestionNavigatorProps> = ({
             answers[qId]?.length !== 0;
           const isFlagged = flaggedQuestions.has(idx);
           const isCurrent = currentIndex === idx;
-          const isDisabled = !allowBacktracking && idx < currentIndex;
+          const isLocked = !allowBacktracking && idx < currentIndex;
+          const isDisabled = isLocked;
 
-          let btnClasses = 'relative h-10 rounded-sm font-mono text-xs font-bold transition-all flex items-center justify-center ';
+          let btnClasses =
+            'relative h-8 rounded-sm font-mono text-[11px] font-bold transition-all flex items-center justify-center ';
 
           if (isCurrent) {
-            btnClasses += 'ring-2 ring-redhat-black shadow-sm ';
+            btnClasses += 'ring-2 ring-redhat-black shadow-sm font-black ';
           }
 
-          if (hasAnswer) {
-            btnClasses += 'bg-redhat-red text-white hover:bg-redhat-red-dark ';
+          if (isLocked) {
+            btnClasses += hasAnswer
+              ? 'bg-red-200 text-red-900 opacity-60 cursor-not-allowed '
+              : 'bg-neutral-200 text-neutral-400 opacity-50 cursor-not-allowed ';
+          } else if (hasAnswer) {
+            btnClasses += 'bg-redhat-red text-white hover:bg-redhat-red-dark cursor-pointer ';
           } else {
-            btnClasses += 'bg-redhat-gray-light text-neutral-800 hover:bg-neutral-200 ';
-          }
-
-          if (isDisabled) {
-            btnClasses += 'opacity-40 cursor-not-allowed ';
-          } else {
-            btnClasses += 'cursor-pointer ';
+            btnClasses += 'bg-redhat-gray-light text-neutral-800 hover:bg-neutral-200 cursor-pointer ';
           }
 
           return (
@@ -83,11 +83,12 @@ export const QuestionNavigator: React.FC<QuestionNavigatorProps> = ({
               disabled={isDisabled}
               onClick={() => onSelectIndex(idx)}
               className={btnClasses}
+              title={isLocked ? `Question ${idx + 1} is locked (backtracking disabled)` : `Jump to Question ${idx + 1}`}
             >
               {idx + 1}
               {isFlagged && (
                 <span className="absolute -top-1 -right-1 bg-amber-500 text-white rounded-full p-0.5">
-                  <Flag className="w-2.5 h-2.5 fill-white" />
+                  <Flag className="w-2 h-2 fill-white" />
                 </span>
               )}
             </button>
@@ -113,6 +114,12 @@ export const QuestionNavigator: React.FC<QuestionNavigatorProps> = ({
           <span className="w-3 h-3 border-2 border-redhat-black rounded-xs inline-block" />
           <span>Current</span>
         </div>
+        {!allowBacktracking && (
+          <div className="col-span-2 flex items-center space-x-1.5 text-neutral-500">
+            <span className="w-3 h-3 bg-neutral-300 rounded-xs inline-block" />
+            <span>Locked (Past Questions)</span>
+          </div>
+        )}
       </div>
 
       {/* Pagination & Submit CTA */}

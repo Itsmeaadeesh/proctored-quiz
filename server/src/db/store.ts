@@ -7,6 +7,7 @@ import {
   Question,
   SanitizedQuestion,
   Submission,
+  SubmissionStatus,
   Violation,
   ProctorSnapshot,
 } from '../types';
@@ -237,18 +238,29 @@ class DataStore {
     return newQ;
   }
 
+  private mapDbSubmission(data: any): Submission {
+    if (!data) return data;
+    const sub = { ...data } as Submission;
+    if (sub.disqualification_reason === 'AUTO_SUBMITTED') {
+      sub.status = 'auto_submitted';
+    } else if (sub.disqualification_reason === 'INCOMPLETE') {
+      sub.status = 'incomplete';
+    }
+    return sub;
+  }
+
   // --- SUBMISSION OPERATIONS ---
   async startSubmission(quizId: string, user: User): Promise<Submission> {
+    const quiz = await this.getQuiz(quizId);
+    const durationMinutes = quiz?.duration_minutes || 60;
+    const maxWindowSeconds = durationMinutes * 60;
+
     // Check if an in-progress or existing submission exists
-    const existing = Array.from(this.submissions.values()).find(
+    let existing = Array.from(this.submissions.values()).find(
       (s) => s.quiz_id === quizId && s.user_id === user.id
     );
 
-    if (existing) {
-      return existing;
-    }
-
-    if (this.isSupabaseEnabled && this.supabase) {
+    if (!existing && this.isSupabaseEnabled && this.supabase) {
       try {
         const { data, error } = await this.supabase
           .from('submissions')
@@ -258,11 +270,59 @@ class DataStore {
           .single();
 
         if (!error && data) {
-          const sub = data as Submission;
-          this.submissions.set(sub.id, sub);
-          return sub;
+          existing = this.mapDbSubmission(data);
+          this.submissions.set(existing.id, existing);
         }
       } catch (e) {}
+    }
+
+    if (existing) {
+      // 1. Enforce one attempt: if submission is already finished
+      if (
+        existing.status === 'submitted' ||
+        existing.status === 'auto_submitted' ||
+        existing.status === 'disqualified' ||
+        existing.status === 'incomplete'
+      ) {
+        const err: any = new Error(
+          'You have already attempted or completed this examination. Only one attempt is permitted.'
+        );
+        err.code = 'ATTEMPT_LIMIT_REACHED';
+        err.submission = existing;
+        throw err;
+      }
+
+      // 2. Enforce strict 60-minute window from start time
+      const elapsedSeconds = Math.floor(
+        (Date.now() - new Date(existing.created_at).getTime()) / 1000
+      );
+      if (elapsedSeconds >= maxWindowSeconds) {
+        existing.status = 'incomplete';
+        existing.time_taken_seconds = maxWindowSeconds;
+        existing.disqualification_reason = 'INCOMPLETE';
+
+        if (this.isSupabaseEnabled && this.supabase) {
+          try {
+            await this.supabase
+              .from('submissions')
+              .update({
+                status: 'flagged_for_review',
+                disqualification_reason: 'INCOMPLETE',
+                time_taken_seconds: maxWindowSeconds,
+              })
+              .eq('id', existing.id);
+          } catch (e) {}
+        }
+
+        const err: any = new Error(
+          'Your 60-minute examination window has expired. Re-entry is not permitted.'
+        );
+        err.code = 'WINDOW_EXPIRED';
+        err.submission = existing;
+        throw err;
+      }
+
+      return existing;
     }
 
     const quizQuestions = await this.getQuestions(quizId, false);
@@ -278,7 +338,7 @@ class DataStore {
       student_phone: user.phone,
       answers: {},
       score: 0,
-      total_marks: totalMarks,
+      total_marks: totalMarks || 60,
       status: 'in_progress',
       disqualified: false,
       time_taken_seconds: 0,
@@ -324,7 +384,7 @@ class DataStore {
           .eq('id', submissionId)
           .single();
         if (data && !error) {
-          const sub = data as Submission;
+          const sub = this.mapDbSubmission(data);
           this.submissions.set(sub.id, sub);
           return sub;
         }
@@ -338,7 +398,8 @@ class DataStore {
   async submitAnswers(
     submissionId: string,
     answers: Record<string, string | string[]>,
-    timeSpentSeconds: number
+    timeSpentSeconds: number,
+    statusOverride?: SubmissionStatus
   ): Promise<Submission | null> {
     const submission = await this.getSubmission(submissionId);
     if (!submission) return null;
@@ -346,13 +407,13 @@ class DataStore {
     submission.answers = answers;
     submission.time_taken_seconds = timeSpentSeconds;
 
-    // Calculate score
+    // Calculate score across all questions
     const questions = (await this.getQuestions(submission.quiz_id, false)) as Question[];
 
     let score = 0;
     questions.forEach((q) => {
       const studentAns = answers[q.id];
-      if (studentAns !== undefined && studentAns !== null) {
+      if (studentAns !== undefined && studentAns !== null && studentAns !== '') {
         if (q.type === 'short_answer') {
           const expected = String(q.correct_answer).trim().toLowerCase();
           const given = String(studentAns).trim().toLowerCase();
@@ -382,17 +443,29 @@ class DataStore {
     submission.submitted_at = new Date().toISOString();
 
     if (!submission.disqualified) {
-      submission.status = 'submitted';
+      submission.status = statusOverride || 'submitted';
     }
 
     if (this.isSupabaseEnabled && this.supabase) {
       try {
+        let dbStatus = submission.status;
+        let dbDisqualReason = submission.disqualification_reason;
+
+        if (submission.status === 'auto_submitted') {
+          dbStatus = 'submitted';
+          dbDisqualReason = 'AUTO_SUBMITTED';
+        } else if (submission.status === 'incomplete') {
+          dbStatus = 'flagged_for_review';
+          dbDisqualReason = 'INCOMPLETE';
+        }
+
         await this.supabase
           .from('submissions')
           .update({
             answers: submission.answers,
             score: submission.score,
-            status: submission.status,
+            status: dbStatus,
+            disqualification_reason: dbDisqualReason,
             time_taken_seconds: submission.time_taken_seconds,
             submitted_at: submission.submitted_at,
           })
@@ -537,7 +610,7 @@ class DataStore {
         }
         const { data, error } = await query;
         if (!error && data) {
-          return data as Submission[];
+          return (data as any[]).map((d) => this.mapDbSubmission(d));
         }
       } catch (err) {
         console.warn('Supabase getAllSubmissions error:', err);
@@ -553,7 +626,7 @@ class DataStore {
   async getAdminMetrics(quizId?: string) {
     const subs = await this.getAllSubmissions(quizId);
     const totalSubmissions = subs.length;
-    const completed = subs.filter((s) => s.status === 'submitted');
+    const completed = subs.filter((s) => s.status === 'submitted' || s.status === 'auto_submitted');
     const disqualified = subs.filter((s) => s.disqualified);
     
     let totalViolations = this.violations.length;

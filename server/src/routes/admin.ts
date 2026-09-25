@@ -73,6 +73,17 @@ router.get('/export-csv', async (_req: Request, res: Response) => {
     submissions.forEach((s) => {
       const percentage =
         s.total_marks > 0 ? ((s.score / s.total_marks) * 100).toFixed(1) + '%' : '0%';
+      let displayStatus = 'In Progress';
+      if (s.disqualified) {
+        displayStatus = 'Disqualified';
+      } else if (s.status === 'auto_submitted') {
+        displayStatus = 'Auto-submitted';
+      } else if (s.status === 'incomplete') {
+        displayStatus = 'Incomplete';
+      } else if (s.status === 'submitted') {
+        displayStatus = 'Completed';
+      }
+
       const row = [
         `"${s.student_roll_no || ''}"`,
         `"${s.student_name || ''}"`,
@@ -82,7 +93,7 @@ router.get('/export-csv', async (_req: Request, res: Response) => {
         s.total_marks,
         percentage,
         s.violations_count || 0,
-        `"${s.status}"`,
+        `"${displayStatus}"`,
         s.time_taken_seconds || 0,
         s.disqualified ? 'YES' : 'NO',
         `"${s.submitted_at || s.created_at}"`,
