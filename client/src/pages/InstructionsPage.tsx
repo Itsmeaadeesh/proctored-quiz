@@ -35,6 +35,24 @@ export const InstructionsPage: React.FC<InstructionsPageProps> = ({ onStartExam 
       .catch((err) => console.error(err));
   }, []);
 
+  const handleLaunchExam = async () => {
+    try {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        await elem.requestFullscreen();
+      } else if ((elem as any).webkitRequestFullscreen) {
+        await (elem as any).webkitRequestFullscreen();
+      } else if ((elem as any).mozRequestFullScreen) {
+        await (elem as any).mozRequestFullScreen();
+      } else if ((elem as any).msRequestFullscreen) {
+        await (elem as any).msRequestFullscreen();
+      }
+    } catch (err) {
+      console.warn('Fullscreen entry on launch:', err);
+    }
+    onStartExam();
+  };
+
   return (
     <div className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 py-8 w-full">
       
@@ -193,7 +211,7 @@ export const InstructionsPage: React.FC<InstructionsPageProps> = ({ onStartExam 
           <button
             type="button"
             disabled={!hasAgreed}
-            onClick={onStartExam}
+            onClick={handleLaunchExam}
             className="w-full py-4 px-6 bg-redhat-red hover:bg-redhat-red-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-sm tracking-wider uppercase rounded-sm flex items-center justify-center space-x-2 shadow-lg transition-all cursor-pointer"
           >
             <span>Launch Proctored Exam</span>

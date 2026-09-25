@@ -81,6 +81,8 @@ export function useProctoring({
         await elem.requestFullscreen();
       } else if ((elem as any).webkitRequestFullscreen) {
         await (elem as any).webkitRequestFullscreen();
+      } else if ((elem as any).mozRequestFullScreen) {
+        await (elem as any).mozRequestFullScreen();
       } else if ((elem as any).msRequestFullscreen) {
         await (elem as any).msRequestFullscreen();
       }
@@ -94,13 +96,17 @@ export function useProctoring({
   useEffect(() => {
     if (!isActive) return;
 
-    const handleFullscreenChange = () => {
-      const isCurrentlyFullscreen = Boolean(
+    const checkFs = () => {
+      return Boolean(
         document.fullscreenElement ||
           (document as any).webkitFullscreenElement ||
+          (document as any).mozFullScreenElement ||
           (document as any).msFullscreenElement
       );
+    };
 
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = checkFs();
       setIsFullscreen(isCurrentlyFullscreen);
 
       if (!isCurrentlyFullscreen) {
@@ -112,13 +118,40 @@ export function useProctoring({
       }
     };
 
+    // Immediate check on mount/activation:
+    // If not currently in fullscreen, prompt the modal immediately!
+    const initiallyFs = checkFs();
+    setIsFullscreen(initiallyFs);
+    if (!initiallyFs) {
+      setShowFullscreenModal(true);
+    }
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     document.addEventListener('msfullscreenchange', handleFullscreenChange);
 
+    // Watchdog interval: ensure student cannot sit in windowed mode
+    const watchdogInterval = setInterval(() => {
+      const isFs = checkFs();
+      if (!isFs) {
+        setIsFullscreen(false);
+        setShowFullscreenModal((prev) => {
+          if (!prev) {
+            logViolation('FULLSCREEN_EXIT', { action: 'Exited fullscreen mode (watchdog)' });
+            triggerWarning('Fullscreen exited! Re-enter fullscreen immediately.');
+            return true;
+          }
+          return prev;
+        });
+      }
+    }, 1200);
+
     return () => {
+      clearInterval(watchdogInterval);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('msfullscreenchange', handleFullscreenChange);
     };
   }, [isActive, logViolation]);
