@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { Shield, AlertCircle, ArrowRight } from 'lucide-react';
+import { Shield, AlertCircle, ArrowRight, Lock } from 'lucide-react';
 
 interface LoginPageProps {
   onSuccess: (target: 'instructions' | 'admin') => void;
@@ -16,6 +16,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
   const [rollNo, setRollNo] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+
+  // Admin Form State
+  const [passcode, setPasscode] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -43,15 +46,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
 
   const handleAdminSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!passcode.trim()) {
+      setErrorMsg('Please enter the coordinator passcode.');
+      return;
+    }
+
     setIsLoading(true);
     setErrorMsg(null);
 
     try {
-      const data = await api.loginAdmin();
+      const data = await api.loginAdmin(passcode.trim());
       loginAdmin(data.user);
       onSuccess('admin');
     } catch (err: any) {
-      setErrorMsg(err.message || 'Coordinator access failed.');
+      setErrorMsg(err.message || 'Invalid coordinator passcode.');
     } finally {
       setIsLoading(false);
     }
@@ -196,29 +204,46 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
           </form>
         )}
 
-        {/* ADMIN TAB - DIRECT COORDINATOR ACCESS */}
+        {/* ADMIN TAB - SECURE COORDINATOR PASSCODE */}
         {activeTab === 'admin' && (
-          <div className="space-y-5">
-            <div className="p-4 bg-redhat-gray-light border border-redhat-gray-border rounded-xs text-xs space-y-2 text-left">
+          <form onSubmit={handleAdminSubmit} className="space-y-4">
+            <div className="p-3.5 bg-redhat-gray-light border border-redhat-gray-border rounded-xs text-xs space-y-1.5 text-left">
               <div className="flex items-center text-redhat-red font-bold uppercase tracking-wider text-[11px]">
                 <Shield className="w-3.5 h-3.5 mr-1.5 shrink-0" />
                 Coordinator &amp; Proctor Console
               </div>
-              <p className="text-neutral-700 leading-relaxed">
-                Direct administrative access is enabled for authorized GGITS event coordinators and invigilators to manage quiz configurations, inspect candidate submissions, review proctoring violation logs, and export certification records.
+              <p className="text-neutral-700 leading-relaxed text-[11px]">
+                Restricted access for authorized GGITS event coordinators and invigilators. Enter your secure credentials to continue.
               </p>
             </div>
 
+            <div>
+              <label className="block text-xs font-bold uppercase text-redhat-black tracking-wider mb-1">
+                Coordinator Passcode <span className="text-redhat-red">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  required
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  placeholder="Enter coordinator passcode"
+                  className="w-full px-3.5 py-2.5 pr-10 border border-redhat-gray-border rounded-sm text-sm text-redhat-black focus:outline-hidden focus:border-l-4 focus:border-l-redhat-red focus:border-redhat-gray-dark transition-all bg-white font-mono"
+                  autoComplete="current-password"
+                />
+                <Lock className="w-4 h-4 text-neutral-400 absolute right-3 top-3 pointer-events-none" />
+              </div>
+            </div>
+
             <button
-              type="button"
-              onClick={() => handleAdminSubmit()}
+              type="submit"
               disabled={isLoading}
               className="w-full py-3.5 px-4 bg-redhat-black hover:bg-neutral-800 text-white font-bold text-sm tracking-wider uppercase rounded-sm flex items-center justify-center space-x-2 transition-colors shadow-md mt-6 cursor-pointer"
             >
               <Shield className="w-4 h-4 text-redhat-red" />
-              <span>{isLoading ? 'Accessing Console...' : 'Enter Admin Console'}</span>
+              <span>{isLoading ? 'Verifying Credentials...' : 'Authenticate & Enter Console'}</span>
             </button>
-          </div>
+          </form>
         )}
 
       </div>

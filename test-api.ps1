@@ -16,7 +16,7 @@ $quizId = $student.quizId
 $userId = $student.user.id
 
 Write-Host "`n--- 3. Testing Admin Login ---"
-$adminBody = @{ passcode = "RHA26@GGITS" } | ConvertTo-Json
+$adminBody = @{ passcode = "RHAGGITS1234@1234*#ZYX" } | ConvertTo-Json
 $admin = Invoke-RestMethod -Uri 'http://localhost:5000/api/auth/admin-login' -Method Post -ContentType 'application/json' -Body $adminBody
 Write-Host "Admin access verified for:" $admin.user.name
 

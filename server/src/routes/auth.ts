@@ -27,10 +27,19 @@ router.post('/student-login', async (req: Request, res: Response) => {
   }
 });
 
-// Admin Direct Login (Passcode-free coordinator access)
-router.post('/admin-login', async (_req: Request, res: Response) => {
+// Admin Authentication with Secure Passcode
+router.post('/admin-login', async (req: Request, res: Response) => {
   try {
-    const user = await store.getAdminUser();
+    const { passcode } = req.body;
+
+    if (!passcode) {
+      return res.status(400).json({ error: 'Coordinator passcode is required.' });
+    }
+
+    const user = await store.verifyAdmin(passcode);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid coordinator passcode.' });
+    }
 
     return res.json({
       user,
@@ -39,7 +48,7 @@ router.post('/admin-login', async (_req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error('Error in admin-login:', err);
-    return res.status(500).json({ error: 'Admin login failed.' });
+    return res.status(500).json({ error: 'Authentication failed.' });
   }
 });
 

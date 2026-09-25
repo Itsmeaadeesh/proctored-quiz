@@ -155,8 +155,12 @@ class DataStore {
     return defaultAdmin;
   }
 
-  async verifyAdmin(_passcode?: string): Promise<User | null> {
-    return this.getAdminUser();
+  async verifyAdmin(passcode?: string): Promise<User | null> {
+    const expected = process.env.ADMIN_PASSCODE || 'RHAGGITS1234@1234*#ZYX';
+    if (passcode && passcode.trim() === expected) {
+      return this.getAdminUser();
+    }
+    return null;
   }
 
   // --- QUIZ OPERATIONS ---
