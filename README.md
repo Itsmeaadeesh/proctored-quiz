@@ -234,7 +234,7 @@ If you want to persist data to a Supabase project instead of using the built-in 
 5. Add environment variables:
    - `PORT`: `5000` (or leave default for host)
    - `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (if using Supabase)
-   - `ADMIN_PASSCODE`: `RHA26@GGITS`
+
 
 ---
 
