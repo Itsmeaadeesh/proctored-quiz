@@ -27,19 +27,10 @@ router.post('/student-login', async (req: Request, res: Response) => {
   }
 });
 
-// Admin Passcode Login
-router.post('/admin-login', async (req: Request, res: Response) => {
+// Admin Direct Login (Passcode-free coordinator access)
+router.post('/admin-login', async (_req: Request, res: Response) => {
   try {
-    const { passcode } = req.body;
-
-    if (!passcode) {
-      return res.status(400).json({ error: 'Passcode is required.' });
-    }
-
-    const user = await store.verifyAdmin(passcode);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid administrator passcode. Try "RHA26@GGITS" or "admin".' });
-    }
+    const user = await store.getAdminUser();
 
     return res.json({
       user,

@@ -187,7 +187,7 @@ The client will start on `http://localhost:5173`. Open this URL in your web brow
 
 ### 🛡️ Coordinator / Admin Access
 - Navigate to the **"Coordinator / Admin"** tab on the login screen.
-- **Passcode**: `RHA26@GGITS` or `admin`
+- Click **"Enter Admin Console"** for direct administrative access.
 - Grants full access to real-time candidate metrics, violation audit logs, snapshot review, settings configuration, and CSV export.
 
 ---

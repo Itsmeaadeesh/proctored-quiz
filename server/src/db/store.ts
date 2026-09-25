@@ -140,12 +140,23 @@ class DataStore {
     return newUser;
   }
 
-  async verifyAdmin(passcode: string): Promise<User | null> {
-    const validPasscodes = ['RHA26@GGITS', 'redhat2026', 'admin'];
-    if (validPasscodes.includes(passcode.trim())) {
-      return this.users.get('00000000-0000-0000-0000-000000000001') || null;
-    }
-    return null;
+  async getAdminUser(): Promise<User> {
+    const admin = this.users.get('00000000-0000-0000-0000-000000000001');
+    if (admin) return admin;
+    const defaultAdmin: User = {
+      id: '00000000-0000-0000-0000-000000000001',
+      name: 'GGITS Red Hat Coordinator',
+      roll_no: 'ADMIN-RHA',
+      email: 'admin@ggits.ac.in',
+      role: 'admin',
+      created_at: new Date().toISOString(),
+    };
+    this.users.set(defaultAdmin.id, defaultAdmin);
+    return defaultAdmin;
+  }
+
+  async verifyAdmin(_passcode?: string): Promise<User | null> {
+    return this.getAdminUser();
   }
 
   // --- QUIZ OPERATIONS ---

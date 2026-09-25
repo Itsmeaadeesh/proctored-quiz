@@ -26,15 +26,15 @@ export const api = {
     return res.json();
   },
 
-  async loginAdmin(passcode: string): Promise<{ user: User; role: 'admin' }> {
+  async loginAdmin(passcode?: string): Promise<{ user: User; role: 'admin' }> {
     const res = await fetch(`${BASE_URL}/auth/admin-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ passcode }),
+      body: JSON.stringify({ passcode: passcode || '' }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({ error: 'Admin login failed' }));
-      throw new Error(data.error || 'Invalid admin passcode');
+      throw new Error(data.error || 'Admin login failed');
     }
     return res.json();
   },
