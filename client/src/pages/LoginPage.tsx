@@ -138,18 +138,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
               </p>
             </div>
 
-            {/* Coordinator Portal Button */}
-            <div className="space-y-3 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href = '/admin';
-                }}
-                className="w-full py-3.5 px-4 bg-redhat-black hover:bg-neutral-800 text-white font-black text-xs uppercase tracking-wider rounded-sm flex items-center justify-center space-x-2 transition-colors cursor-pointer shadow-md"
-              >
-                <ShieldCheck className="w-4 h-4 text-redhat-red" />
-                <span>Faculty &amp; Coordinator Portal (Passcode Required)</span>
-              </button>
+            {/* Bottom Status Footer */}
+            <div className="pt-2 text-center border-t border-neutral-100">
+              <p className="text-[11px] text-neutral-400 font-mono tracking-wide uppercase">
+                RHA DAY 26 &bull; Examination Session Terminated &bull; GGITS
+              </p>
             </div>
 
           </div>
