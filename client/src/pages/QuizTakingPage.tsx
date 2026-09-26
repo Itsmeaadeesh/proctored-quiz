@@ -9,7 +9,7 @@ import { QuestionNavigator } from '../components/QuestionNavigator';
 import { WatermarkOverlay } from '../components/WatermarkOverlay';
 import { FullscreenModal } from '../components/FullscreenModal';
 import { BlackoutOverlay } from '../components/BlackoutOverlay';
-import { AlertCircle, ShieldAlert, CheckCircle2, Lock } from 'lucide-react';
+import { AlertCircle, ShieldAlert, CheckCircle2, Lock, Clock } from 'lucide-react';
 
 interface QuizTakingPageProps {
   onExamCompleted: (submissionId: string) => void;
@@ -269,9 +269,19 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
           <h2 className="text-xl font-black text-redhat-black font-display uppercase tracking-tight mb-2">
             Examination Attempt Locked
           </h2>
-          <p className="text-xs text-neutral-600 mb-6 leading-relaxed">
+          <p className="text-xs text-neutral-600 mb-4 leading-relaxed">
             {lockedMessage}
           </p>
+
+          <div className="p-3.5 bg-neutral-900 border-l-4 border-l-redhat-red text-white rounded-xs text-xs mb-6 text-left">
+            <div className="font-bold uppercase tracking-wider text-[10px] text-red-400 flex items-center space-x-1.5 mb-1">
+              <Clock className="w-3.5 h-3.5 shrink-0" />
+              <span>Results Declaration Timeline</span>
+            </div>
+            <p className="text-[11px] text-neutral-300 leading-normal">
+              Official scores and merit rankings will be announced as soon as the quiz period is concluded for all candidates.
+            </p>
+          </div>
           {lockedSubmissionId ? (
             <button
               onClick={() => onExamCompleted(lockedSubmissionId)}

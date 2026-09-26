@@ -12,6 +12,9 @@ import {
   FileCheck,
   Info,
   Lock,
+  Hourglass,
+  Award,
+  Sparkles,
 } from 'lucide-react';
 
 interface QuizResultPageProps {
@@ -144,6 +147,78 @@ export const QuizResultPage: React.FC<QuizResultPageProps> = ({
           </div>
         </div>
 
+        {/* Results Declaration Timeline Announcement Banner */}
+        <div className="p-6 sm:p-8 bg-gradient-to-br from-neutral-900 via-redhat-black to-neutral-950 text-white border-b-4 border-b-redhat-red">
+          <div className="flex items-start space-x-4">
+            <div className="w-12 h-12 rounded-full bg-red-950/90 border-2 border-redhat-red text-redhat-red flex items-center justify-center shrink-0 shadow-lg mt-0.5">
+              <Hourglass className="w-6 h-6 animate-pulse" />
+            </div>
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className="inline-flex items-center space-x-1.5 bg-red-950/80 text-red-300 text-[10px] font-mono font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full border border-red-800/80 shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-redhat-red animate-ping" />
+                  <span>Evaluation Window Active</span>
+                </span>
+                <span className="text-[10px] font-mono text-neutral-400">
+                  RHA DAY 26 &bull; Official Timeline
+                </span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-black font-display text-white tracking-tight leading-snug">
+                Results Will Be Declared Once The Quiz Period Is Concluded
+              </h2>
+              
+              <p className="text-xs sm:text-sm text-neutral-300 mt-2 leading-relaxed">
+                The examination session is actively underway across all candidate batches. To maintain strict competitive secrecy and academic integrity, individual scores, detailed answer keys, and merit rankings will be published by the <strong>Red Hat Academy &amp; GGITS Examination Coordinators</strong> immediately after the overall quiz period concludes.
+              </p>
+
+              {/* 3 Step Visual Milestone Tracker */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5 pt-4 border-t border-neutral-800 text-xs">
+                <div className="bg-neutral-900/90 border border-neutral-800 p-3.5 rounded-xs flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center space-x-1.5 text-emerald-400 font-bold mb-1.5">
+                      <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span className="uppercase text-[10px] tracking-wider">Step 1: Completed</span>
+                    </div>
+                    <div className="font-bold text-white text-xs">Your Exam Submitted</div>
+                    <p className="text-[11px] text-neutral-400 mt-1 leading-normal">
+                      60 questions &amp; telemetry timestamped
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-neutral-900/90 border border-amber-600/60 p-3.5 rounded-xs relative overflow-hidden flex flex-col justify-between">
+                  <div className="absolute top-0 right-0 w-2 h-full bg-amber-500/80 animate-pulse" />
+                  <div>
+                    <div className="flex items-center space-x-1.5 text-amber-400 font-bold mb-1.5">
+                      <Clock className="w-3.5 h-3.5 shrink-0 animate-spin" />
+                      <span className="uppercase text-[10px] tracking-wider">Step 2: In Progress</span>
+                    </div>
+                    <div className="font-bold text-white text-xs">Quiz Period Underway</div>
+                    <p className="text-[11px] text-neutral-400 mt-1 leading-normal">
+                      Awaiting completion of all examinees
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-neutral-900/90 border border-neutral-800 p-3.5 rounded-xs flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center space-x-1.5 text-red-400 font-bold mb-1.5">
+                      <Award className="w-3.5 h-3.5 shrink-0" />
+                      <span className="uppercase text-[10px] tracking-wider">Step 3: Upcoming</span>
+                    </div>
+                    <div className="font-bold text-white text-xs">Final Results &amp; Merit List</div>
+                    <p className="text-[11px] text-neutral-400 mt-1 leading-normal">
+                      Declared as soon as quiz period is done
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
         {/* Candidate & Session Details Receipt */}
         <div className="p-6 sm:p-8 space-y-6">
           <div>
@@ -229,21 +304,25 @@ export const QuizResultPage: React.FC<QuizResultPageProps> = ({
             </div>
           </div>
 
-          {/* Results Confidentiality Notice */}
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-sm flex items-start space-x-3 text-xs">
-            <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-            <div className="space-y-1 text-amber-950">
-              <div className="font-bold uppercase tracking-wider text-[11px] text-amber-900 flex items-center space-x-1">
-                <Lock className="w-3 h-3 text-amber-800" />
-                <span>Result &amp; Evaluation Policy</span>
+          {/* Results Confidentiality & Timeline Notice */}
+          <div className="p-4 bg-amber-50 border-2 border-amber-300 rounded-sm flex items-start space-x-3 text-xs">
+            <Info className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+            <div className="space-y-1.5 text-amber-950 flex-1">
+              <div className="font-bold uppercase tracking-wider text-[11px] text-amber-900 flex items-center justify-between">
+                <div className="flex items-center space-x-1.5">
+                  <Lock className="w-3.5 h-3.5 text-amber-800" />
+                  <span>Official Results Declaration Notice</span>
+                </div>
+                <span className="font-mono text-[10px] text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-xs font-bold uppercase">
+                  Coming Post-Exam Period
+                </span>
               </div>
               <p className="leading-relaxed text-[11px] text-amber-900/90">
-                In accordance with institutional guidelines for competitive events, individual scores, answer keys,
-                and merit rankings are withheld from participants. Official results, winner announcements, and certificates
-                will be declared directly by the <strong>Examination Coordinators</strong> following proctoring verification.
+                To guarantee fairness and integrity for all examinees, individual scores and answer sheets are kept strictly confidential during test administration.
+                <strong> Official scorecards, merit ranks, and prize winners will be declared once the entire quiz period has ended.</strong>
               </p>
-              <p className="text-[10px] text-amber-800 font-semibold pt-1">
-                You may now safely close your browser tab or return to the main portal.
+              <p className="text-[11px] text-amber-900 font-semibold pt-0.5">
+                Keep your Roll Number (<strong>{submission.student_roll_no}</strong>) handy to look up your position on the official leaderboard. You may now safely close this window.
               </p>
             </div>
           </div>

@@ -183,9 +183,10 @@ async function runLiveStressAndConcurrencyAudit() {
     },
   });
   if (reattemptRes.statusCode !== 403) {
+    console.error('Unexpected reattempt response:', JSON.stringify(reattemptRes.json, null, 2));
     throw new Error(`Reattempt was not locked with 403! Got: HTTP ${reattemptRes.statusCode}`);
   }
-  console.log(`✔ Reattempt correctly rejected with HTTP 403 (${reattemptRes.json?.message})`);
+  console.log(`✔ Reattempt correctly rejected with HTTP 403 (${reattemptRes.json?.error || reattemptRes.json?.message})`);
 
   // [5] Admin Passcode Protection & Leaderboard
   console.log('\n[5/6] Verifying Admin Security & Leaderboard computation...');
@@ -198,32 +199,32 @@ async function runLiveStressAndConcurrencyAudit() {
   const adminLeaderboardRes = await request('/api/admin/leaderboard', {
     headers: { 'x-admin-passcode': ADMIN_PASSCODE },
   });
-  if (adminLeaderboardRes.statusCode !== 200 || !Array.isArray(adminLeaderboardRes.json?.leaderboard)) {
+  if (adminLeaderboardRes.statusCode !== 200 || !Array.isArray(adminLeaderboardRes.json)) {
     throw new Error(`Admin failed to load leaderboard: HTTP ${adminLeaderboardRes.statusCode}`);
   }
-  const leaderboard = adminLeaderboardRes.json.leaderboard;
+  const leaderboard = adminLeaderboardRes.json;
   console.log(`✔ Admin Leaderboard retrieved with ${leaderboard.length} ranked entries.`);
   const top1 = leaderboard[0];
-  console.log(`  Rank #1: ${top1.student_name} (${top1.student_roll_no}) | Score: ${top1.score}/60 | Time: ${top1.time_taken_seconds}s | Started: ${top1.started_at} | Finished: ${top1.finished_at}`);
+  console.log(`  Rank #1: ${top1.student_name} (${top1.student_roll_no}) | Score: ${top1.score}/60 | Time: ${top1.time_taken_seconds}s | Started: ${top1.created_at} | Finished: ${top1.submitted_at}`);
 
-  // [6] Admin Question-by-Question Evaluation Report & CSV Export
-  console.log('\n[6/6] Verifying Admin Question-by-Question Report & CSV Export...');
-  const reportRes = await request(`/api/admin/submissions/${firstCandidate.subId}/report`, {
+  // [6] Admin Question-by-Question Evaluation Audit & CSV Export
+  console.log('\n[6/6] Verifying Admin Detailed Audit & CSV Export...');
+  const detailRes = await request(`/api/admin/submissions/${firstCandidate.subId}/details`, {
     headers: { 'x-admin-passcode': ADMIN_PASSCODE },
   });
-  if (reportRes.statusCode !== 200 || !reportRes.json?.report) {
-    throw new Error(`Admin failed to retrieve report: HTTP ${reportRes.statusCode}`);
+  if (detailRes.statusCode !== 200 || !detailRes.json?.submission) {
+    throw new Error(`Admin failed to retrieve details: HTTP ${detailRes.statusCode}`);
   }
-  const report = reportRes.json.report;
-  console.log(`✔ Detailed Report verified: ${report.student.name} | Answered: ${report.answeredCount}/60 | Correct: ${report.correctCount} | Score: ${report.score}`);
+  const detail = detailRes.json;
+  console.log(`✔ Candidate Audit Verified: ${detail.submission.student_name} | Score: ${detail.submission.score}/60 | Questions: ${detail.questions.length} | Violations: ${detail.violations.length}`);
 
-  const csvRes = await request('/api/admin/export-csv', {
+  const csvRes = await request('/api/admin/export-leaderboard-csv', {
     headers: { 'x-admin-passcode': ADMIN_PASSCODE },
   });
   if (csvRes.statusCode !== 200 || !csvRes.headers['content-disposition']?.includes('.csv')) {
     throw new Error(`CSV export failed: HTTP ${csvRes.statusCode}`);
   }
-  console.log('✔ CSV Export verified with Content-Disposition attachment.');
+  console.log('✔ Official Leaderboard CSV Export verified with Content-Disposition attachment.');
 
   console.log('\n================================================================');
   console.log('🎉 100% PRODUCTION VERIFICATION & CONCURRENCY AUDIT PASSED!');
