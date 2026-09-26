@@ -308,19 +308,26 @@ class DataStore {
     const durationMinutes = quiz?.duration_minutes || 60;
     const maxWindowSeconds = durationMinutes * 60;
 
-    // Check if an in-progress or existing submission exists
+    // Check if an in-progress or existing submission exists by user_id OR student_roll_no
+    const rollKey = user.roll_no ? user.roll_no.trim().toUpperCase() : '';
     let existing = Array.from(this.submissions.values()).find(
-      (s) => s.quiz_id === quizId && s.user_id === user.id
+      (s) => s.quiz_id === quizId && (s.user_id === user.id || (rollKey && s.student_roll_no?.trim().toUpperCase() === rollKey))
     );
 
     if (!existing && this.isSupabaseEnabled && this.supabase) {
       try {
-        const { data, error } = await this.supabase
+        let query = this.supabase
           .from('submissions')
           .select('*')
-          .eq('quiz_id', quizId)
-          .eq('user_id', user.id)
-          .single();
+          .eq('quiz_id', quizId);
+
+        if (rollKey) {
+          query = query.or(`user_id.eq.${user.id},student_roll_no.eq.${rollKey}`);
+        } else {
+          query = query.eq('user_id', user.id);
+        }
+
+        const { data, error } = await query.limit(1).maybeSingle();
 
         if (!error && data) {
           existing = this.mapDbSubmission(data);
