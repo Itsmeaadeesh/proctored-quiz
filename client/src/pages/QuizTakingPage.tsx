@@ -271,7 +271,7 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
               onClick={() => onExamCompleted(lockedSubmissionId)}
               className="w-full py-3 px-4 bg-redhat-red hover:bg-redhat-red-dark text-white font-bold text-xs uppercase tracking-wider rounded-sm transition-colors cursor-pointer"
             >
-              View Incident Certificate &amp; Result
+              View Submission Receipt
             </button>
           ) : (
             <button
@@ -496,7 +496,7 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
                 onClick={handleSubmitExam}
                 className="flex-1 py-2.5 bg-redhat-red hover:bg-redhat-red-dark text-white rounded-sm text-xs font-black uppercase tracking-wider cursor-pointer"
               >
-                {isSubmitting ? 'Evaluating...' : 'Confirm Submission'}
+                {isSubmitting ? 'Submitting...' : 'Confirm Submission'}
               </button>
             </div>
           </div>
