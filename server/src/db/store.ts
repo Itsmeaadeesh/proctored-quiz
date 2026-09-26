@@ -188,10 +188,9 @@ class DataStore {
         const { data, error } = await this.supabase
           .from('quizzes')
           .select('*')
-          .eq('is_active', true)
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
         if (!error && data) {
           this.quizzes.set(data.id, data as Quiz);
           return data as Quiz;
@@ -383,6 +382,15 @@ class DataStore {
       }
 
       return existing;
+    }
+
+    if (!quiz || !quiz.is_active) {
+      const err: any = new Error(
+        'The examination period for RHA DAY 26 has officially concluded. New attempts and submissions are closed.'
+      );
+      err.code = 'QUIZ_CLOSED';
+      err.is_closed = true;
+      throw err;
     }
 
     const quizQuestions = await this.getQuestions(quizId, false);

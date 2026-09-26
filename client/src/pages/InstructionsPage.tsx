@@ -202,19 +202,26 @@ export const InstructionsPage: React.FC<InstructionsPageProps> = ({ onStartExam 
               </div>
             </div>
 
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xs text-[11px] text-red-900 leading-relaxed mb-4">
-              <strong>Notice:</strong> Once you click below, the browser enters fullscreen and your 60-minute countdown starts immediately.
-            </div>
+            {quiz && quiz.is_active === false ? (
+              <div className="p-3 bg-red-100 border border-redhat-red rounded-xs text-xs text-red-950 font-bold mb-4 flex items-center space-x-2">
+                <Lock className="w-4 h-4 text-redhat-red shrink-0" />
+                <span>The examination window has officially closed. No new sessions can be launched.</span>
+              </div>
+            ) : (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xs text-[11px] text-red-900 leading-relaxed mb-4">
+                <strong>Notice:</strong> Once you click below, the browser enters fullscreen and your 60-minute countdown starts immediately.
+              </div>
+            )}
           </div>
 
           {/* Launch Exam CTA */}
           <button
             type="button"
-            disabled={!hasAgreed}
+            disabled={!hasAgreed || quiz?.is_active === false}
             onClick={handleLaunchExam}
             className="w-full py-4 px-6 bg-redhat-red hover:bg-redhat-red-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-sm tracking-wider uppercase rounded-sm flex items-center justify-center space-x-2 shadow-lg transition-all cursor-pointer"
           >
-            <span>Launch Proctored Exam</span>
+            <span>{quiz?.is_active === false ? 'Examination Window Closed' : 'Launch Proctored Exam'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
 

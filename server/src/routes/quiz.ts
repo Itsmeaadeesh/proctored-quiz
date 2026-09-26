@@ -107,6 +107,13 @@ router.post('/:quizId/start', async (req: Request, res: Response) => {
       questions,
     });
   } catch (err: any) {
+    if (err.code === 'QUIZ_CLOSED') {
+      return res.status(403).json({
+        error: err.message,
+        code: 'QUIZ_CLOSED',
+        is_closed: true,
+      });
+    }
     if (err.code === 'ATTEMPT_LIMIT_REACHED' || err.code === 'WINDOW_EXPIRED') {
       return res.status(403).json({
         error: err.message,

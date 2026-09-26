@@ -9,7 +9,7 @@ export const DEFAULT_QUIZ: Quiz = {
   max_violations: 3,
   shuffle_questions: true,
   allow_backtracking: true,
-  is_active: true,
+  is_active: false,
   created_at: new Date().toISOString(),
 };
 

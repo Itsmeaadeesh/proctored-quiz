@@ -19,8 +19,16 @@ router.post('/student-login', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Please enter a valid 10-digit mobile number.' });
     }
 
-    const user = await store.getOrCreateStudent(rollNo, name, email, cleanPhone);
     const activeQuiz = await store.getActiveQuiz();
+
+    if (!activeQuiz.is_active) {
+      return res.status(403).json({
+        error: 'The examination window for RHA DAY 26 has officially concluded. New attempts and submissions are closed.',
+        is_closed: true,
+      });
+    }
+
+    const user = await store.getOrCreateStudent(rollNo, name, email, cleanPhone);
 
     return res.json({
       user,
