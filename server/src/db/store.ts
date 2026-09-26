@@ -244,6 +244,13 @@ class DataStore {
 
   // --- QUESTION OPERATIONS ---
   async getQuestions(quizId: string, sanitize = true): Promise<(Question | SanitizedQuestion)[]> {
+    // High-concurrency optimization for 500 examinees: Serve cached questions immediately if loaded
+    const cached = Array.from(this.questions.values()).filter((q) => q.quiz_id === quizId);
+    if (cached.length >= 60) {
+      if (!sanitize) return cached;
+      return cached.map(({ correct_answer, ...rest }) => rest);
+    }
+
     if (this.isSupabaseEnabled && this.supabase) {
       try {
         const { data, error } = await this.supabase
@@ -409,6 +416,7 @@ class DataStore {
           total_marks: submission.total_marks,
           status: submission.status,
           disqualified: submission.disqualified,
+          created_at: submission.created_at,
         });
       } catch (err) {
         console.warn('Supabase insert submission error:', err);

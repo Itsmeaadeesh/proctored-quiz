@@ -120,13 +120,28 @@ export const api = {
     violationsCount: number;
     message: string;
   }> {
-    const res = await fetch(`${BASE_URL}/submissions/${submissionId}/submit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ answers, timeSpentSeconds, status }),
-    });
-    if (!res.ok) throw new Error('Failed to submit quiz');
-    return res.json();
+    let lastError: any = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(`${BASE_URL}/submissions/${submissionId}/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answers, timeSpentSeconds, status }),
+        });
+        if (res.ok) {
+          return await res.json();
+        }
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${res.status}`);
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`submitQuiz attempt ${attempt} failed, retrying...`, err);
+        if (attempt < 3) {
+          await new Promise((r) => setTimeout(r, attempt * 800));
+        }
+      }
+    }
+    throw lastError || new Error('Failed to submit quiz after 3 attempts');
   },
 
   async saveDraftProgress(

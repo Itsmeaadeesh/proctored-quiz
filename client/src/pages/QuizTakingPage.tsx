@@ -38,6 +38,7 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
   const submissionIdRef = useRef<string | null>(submissionId);
   const isSubmittingRef = useRef(false);
   const quizRef = useRef<Quiz | null>(null);
+  const draftDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Synchronize state references
   useEffect(() => {
@@ -202,15 +203,20 @@ export const QuizTakingPage: React.FC<QuizTakingPageProps> = ({ onExamCompleted 
       };
       answersRef.current = next;
 
-      // Save to localStorage immediately
+      // Save to localStorage immediately (0ms instant client-side persistence)
       const subId = submissionIdRef.current;
       if (subId) {
         try {
           localStorage.setItem(`rha_answers_${subId}`, JSON.stringify(next));
         } catch (e) {}
 
-        // Fire-and-forget sync to backend
-        api.saveDraftProgress(subId, next).catch(() => {});
+        // Debounced sync to backend (batches rapid clicks to protect database under 500 concurrent users)
+        if (draftDebounceRef.current) {
+          clearTimeout(draftDebounceRef.current);
+        }
+        draftDebounceRef.current = setTimeout(() => {
+          api.saveDraftProgress(subId, answersRef.current).catch(() => {});
+        }, 600);
       }
 
       return next;
